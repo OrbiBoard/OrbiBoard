@@ -95,3 +95,8 @@
 #console-main .filters-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* Console titlebar adjustments */
 .titlebar { padding-right: 0 !important; }
+
+/* 修复控制台按钮颜色发绿的问题 */
+.win-btn {
+    color: #e5e7eb !important;
+}

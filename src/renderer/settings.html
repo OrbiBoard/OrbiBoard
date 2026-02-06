@@ -9,14 +9,58 @@
   <link rel="stylesheet" href="./settings.css" />
   <link rel="stylesheet" href="./fonts-local.css" />
   <link rel="stylesheet" href="./remixicon-local.css" />
+  <style>
+    /* 初始加载遮罩 */
+    #loading-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #loading-mask.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+    }
+    .loading-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--fg-title);
+    }
+  </style>
 </head>
 
 <body>
+  <div id="loading-mask">
+    <img src="../../icon.ico" class="loading-logo" alt="Logo" />
+    <div class="loading-title">OrbiBoard</div>
+  </div>
+  <div class="dev-watermark">
+    开发中效果<br>
+    不代表最终版本<br>
+    <span id="build-timestamp"></span>
+  </div>
   <div class="layout">
     <aside class="sidebar">
       <div class="logo">
-        <img src="../../icon.ico" alt="Logo" />
-        <span>OrbiBoard</span>
+        <div class="logo-normal">
+          <img src="../../icon.ico" alt="Logo" />
+          <span>OrbiBoard</span>
+        </div>
+        <div class="logo-active" hidden>
+          <div class="logo-btn close-win" title="关闭窗口"><i class="ri-close-line"></i></div>
+          <span class="logo-title">OrbiBoard</span>
+          <div class="logo-btn collapse-menu" title="收起菜单"><i class="ri-arrow-up-s-line"></i></div>
+        </div>
       </div>
       <nav>
         <button class="nav-item active" data-page="plugins"><i class="ri-puzzle-line"></i> 插件管理</button>
@@ -47,9 +91,10 @@
               class="ri-close-line"></i></button>
         </div>
       </div>
-      <div style="background: #f59e0b; color: #fff; padding: 10px 16px; border-radius: 0; margin: 0; font-size: 13px; line-height: 1.5; flex-shrink: 0;">
-        <i class="ri-alert-line" style="vertical-align: -2px; margin-right: 4px;font-size: 20px;"></i>
-        Alpha测试版本可能存在问题，不建议在生产环境使用。反馈BUG请点击右上角标签。
+      <div class="alpha-banner">
+        <i class="ri-alert-line"></i>
+        <span>Alpha测试版本可能存在问题，不建议在生产环境使用。反馈BUG请点击右上角标签。</span>
+        <button id="close-alpha-banner" class="icon-btn" style="margin-left: auto; width: 20px; height: 20px;"><i class="ri-close-line" style="font-size: 16px;"></i></button>
       </div>
       <main id="content">
         <section id="page-plugins">
@@ -127,9 +172,51 @@
           <!-- 子夹（子页面）导航 -->
           <div class="subnav">
             <button class="sub-item active" data-sub="basic"><i class="ri-settings-2-line"></i> 基本设置</button>
+            <button class="sub-item" data-sub="appearance"><i class="ri-palette-line"></i> 外观与主题</button>
             <button class="sub-item" data-sub="splash"><i class="ri-window-line"></i> 启动页面</button>
             <button class="sub-item" data-sub="time"><i class="ri-time-line"></i> 时间与日期</button>
             <button class="sub-item" data-sub="data"><i class="ri-folder-line"></i> 数据目录</button>
+          </div>
+
+          <!-- 外观与主题 子页 -->
+          <div id="general-appearance" class="panel" hidden>
+            <div class="form">
+              <!-- 主题模式 -->
+              <div class="setting-item">
+                <div class="setting-icon"><i class="ri-contrast-line"></i></div>
+                <div class="setting-main">
+                  <div class="setting-title">主题模式</div>
+                  <div class="setting-desc">选择应用的深色或浅色外观。</div>
+                </div>
+                <div class="setting-action">
+                  <div class="options compact" role="group" aria-label="主题模式">
+                    <input type="radio" id="theme-system" name="themeMode" value="system" />
+                    <label for="theme-system"><i class="ri-computer-line"></i> 跟随系统</label>
+                    <input type="radio" id="theme-light" name="themeMode" value="light" />
+                    <label for="theme-light"><i class="ri-sun-line"></i> 浅色</label>
+                    <input type="radio" id="theme-dark" name="themeMode" value="dark" />
+                    <label for="theme-dark"><i class="ri-moon-line"></i> 深色</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 主题色 -->
+              <div class="setting-item">
+                <div class="setting-icon"><i class="ri-palette-line"></i></div>
+                <div class="setting-main">
+                  <div class="setting-title">主题强调色</div>
+                  <div class="setting-desc">自定义应用的主色调。</div>
+                </div>
+                <div class="setting-action">
+                   <div class="inline">
+                    <!-- 自定义取色器 UI -->
+                    <div id="theme-color-picker" class="color-picker-ui"></div>
+                    <!-- 隐藏的原生取色器，由 UI 触发 -->
+                    <input id="theme-color-custom" type="color" style="visibility:hidden; position:absolute; width:0; height:0;" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 启动页与名言设置（合并） -->
@@ -772,10 +859,9 @@
                 <span class="pill small">平台 <span id="about-platform">—</span></span>
               </div>
               <div class="about-links" style="margin-top: 0;">
-                <a href="https://github.com/OrbiBoard/OrbiBoard" target="_blank" class="btn"><i
-                    class="ri-git-repository-line"></i> 仓库</a>
+                <button id="about-repo" class="btn secondary"><i class="ri-git-repository-line"></i> 仓库</button>
                 <button id="about-copy" class="btn secondary"><i class="ri-file-copy-2-line"></i> 复制版本信息</button>
-                <button id="about-open-data" class="btn"><i class="ri-folder-2-line"></i> 打开数据目录</button>
+                <button id="about-open-data" class="btn secondary"><i class="ri-folder-2-line"></i> 打开数据目录</button>
               </div>
             </div>
               
@@ -866,6 +952,7 @@
   <script src="./settings/processor/icon.js"></script>
   <script src="./settings/processor/text.js"></script>
   <script src="./settings/processor/install.js"></script>
+  <script src="./settings/theme.js"></script>
   <script src="./settings/modals/message.js"></script>
   <script src="./settings/modals/editor.js"></script>
   <script src="./settings/modals/market.js"></script>

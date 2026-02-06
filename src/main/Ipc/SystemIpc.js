@@ -1,4 +1,5 @@
 const { ipcMain, app, dialog } = require('electron');
+const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -211,6 +212,23 @@ function register() {
 
   ipcMain.handle('system:quit', async () => {
     try { app.quit(); return { ok: true }; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+  });
+
+  ipcMain.handle('system:getWallpaper', async () => {
+    return new Promise((resolve) => {
+      if (process.platform !== 'win32') {
+        resolve('');
+        return;
+      }
+      const cmd = `powershell -Command "Get-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name Wallpaper | Select-Object -ExpandProperty Wallpaper"`;
+      exec(cmd, (err, stdout) => {
+        if (err || !stdout) {
+          resolve('');
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+    });
   });
 }
 

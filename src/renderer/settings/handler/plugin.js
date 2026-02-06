@@ -642,7 +642,12 @@ async function renderPluginsByMode(mode) {
   renderPluginSubnav(list);
   
   container.innerHTML = '';
-  let filtered = list.filter((p) => String(p.type || 'plugin').toLowerCase() === 'plugin');
+  const hiddenPlugins = ['desktop-launcher', 'desktop-system-status', 'homework-board'];
+  let filtered = list.filter((p) => {
+    if (String(p.type || 'plugin').toLowerCase() !== 'plugin') return false;
+    if (hiddenPlugins.includes(p.id)) return false;
+    return true;
+  });
   
   if (currentPluginFilter !== 'all') {
       filtered = filtered.filter(p => {

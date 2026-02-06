@@ -1,8 +1,9 @@
-const { app, Tray, Menu, nativeImage, nativeTheme } = require('electron');
+const { app, Tray, Menu, nativeImage, nativeTheme, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const windowManager = require('../Windows/WindowManager');
 const pluginManager = require('../Manager/Plugins/Main');
+const appLauncher = require('../Manager/AppLauncher');
 
 class TrayManager {
   constructor() {
@@ -10,6 +11,8 @@ class TrayManager {
   }
 
   createTray() {
+    appLauncher.init();
+    
     const iconPath = process.platform === 'win32'
       ? path.join(app.getAppPath(), 'icon.ico')
       : path.join(app.getAppPath(), 'logo.png');
@@ -17,6 +20,12 @@ class TrayManager {
     const trayImg = baseImg && baseImg.resize ? baseImg.resize({ width: 24, height: 24 }) : baseImg;
     this.tray = new Tray(trayImg);
     this.tray.setToolTip('OrbiBoard');
+    
+    this.tray.on('click', () => {
+      const pt = screen.getCursorScreenPoint();
+      appLauncher.toggleMenu({ x: pt.x, y: pt.y, type: 'tray' });
+    });
+    
     this.updateMenu();
 
     nativeTheme.on('updated', () => {

@@ -53,6 +53,17 @@ class WindowManager {
     });
     this.settingsWindow.loadFile(path.join(app.getAppPath(), 'src', 'renderer', 'settings.html'));
     this.settingsWindow.on('closed', () => { this.settingsWindow = null; });
+    const sendState = () => {
+      if (!this.settingsWindow || this.settingsWindow.isDestroyed()) return;
+      this.settingsWindow.webContents.send('window-state-changed', {
+        maximized: this.settingsWindow.isMaximized(),
+        fullscreen: this.settingsWindow.isFullScreen()
+      });
+    };
+    this.settingsWindow.on('maximize', sendState);
+    this.settingsWindow.on('unmaximize', sendState);
+    this.settingsWindow.on('enter-full-screen', sendState);
+    this.settingsWindow.on('leave-full-screen', sendState);
   }
 
   createConsoleWindow() {
@@ -69,6 +80,17 @@ class WindowManager {
     });
     this.consoleWindow.loadFile(path.join(app.getAppPath(), 'src', 'renderer', 'console.html'));
     this.consoleWindow.on('closed', () => { this.consoleWindow = null; });
+    const sendState = () => {
+      if (!this.consoleWindow || this.consoleWindow.isDestroyed()) return;
+      this.consoleWindow.webContents.send('window-state-changed', {
+        maximized: this.consoleWindow.isMaximized(),
+        fullscreen: this.consoleWindow.isFullScreen()
+      });
+    };
+    this.consoleWindow.on('maximize', sendState);
+    this.consoleWindow.on('unmaximize', sendState);
+    this.consoleWindow.on('enter-full-screen', sendState);
+    this.consoleWindow.on('leave-full-screen', sendState);
   }
 
   sendSplashProgress(payload) {

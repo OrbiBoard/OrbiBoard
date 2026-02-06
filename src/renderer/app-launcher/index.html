@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- PYLXY 260103 screen.compass 屏幕罗盘应用菜单 -->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OrbiBoard</title>
+    <link rel="stylesheet" href="../remixicon-local.css" />
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div class="root">
+      <div class="topbar">
+        <div class="title"><img src="../../../icon.ico" style="width: 18px; height: 18px;"><span>OrbiBoard</span></div>
+        <div style="display:flex; gap:4px; align-items: center;">
+          <button id="openMain" class="btn ghost"><i class="ri-settings-3-line"></i><span>打开主程序</span></button>
+          <button id="collapse" class="win-control" title="收起"><i class="ri-close-line"></i></button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-wrap">
+          <div class="arrow up" id="arrowUp"><i class="ri-arrow-up-s-line"></i></div>
+          <div class="grid-scroll" id="gridScroll">
+            <div class="grid" id="grid"></div>
+          </div>
+          <div class="arrow down" id="arrowDown"><i class="ri-arrow-down-s-line"></i></div>
+        </div>
+      </div>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

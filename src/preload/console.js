@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('consoleAPI', {
   windowControl: (action) => ipcRenderer.invoke('window:control', action),
+  onWindowStateChanged: (handler) => {
+    ipcRenderer.on('window-state-changed', (_e, payload) => handler && handler(payload));
+  },
   showAppMenu: (coords) => ipcRenderer.invoke('settings:showMenu', coords),
   openConsole: () => ipcRenderer.invoke('console:open'),
   backendLogsGetEntries: (count) => ipcRenderer.invoke('debug:logs:getEntries', count),

@@ -1,0 +1,288 @@
+:root {
+  /* Default dark theme */
+  --bg: #101820;
+  --fg: #e6f0ff;
+  --muted: #88a;
+  --panel: #162030;
+  --border: rgba(255, 255, 255, 0.18);
+  --accent: #238f4a;
+  --item-bg: rgba(255, 255, 255, 0.06);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Microsoft YaHei', sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--item-bg);
+  color: var(--fg);
+  cursor: pointer;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.btn i {
+  font-size: 14px;
+  display: block;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.win-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.win-control:hover {
+  background: #E81123;
+  color: #fff;
+}
+
+.win-control i {
+  font-size: 18px;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+  background: var(--bg);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.grid-wrap {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 44px 8px;
+  min-height: 0;
+}
+
+.grid-scroll {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+  padding-right: 4px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+}
+
+.grid-scroll.at-top {
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 20px), transparent 100%);
+}
+
+.grid-scroll.at-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
+}
+
+.grid-scroll.no-scroll {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 90px;
+  gap: 8px;
+  padding: 4px;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--item-bg);
+  user-select: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.cell:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cell .name {
+  font-size: 12px;
+  text-align: center;
+  color: var(--fg);
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell .pin {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  opacity: 0.8;
+}
+
+.arrow {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--item-bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+
+.arrow:hover {
+  background: var(--panel);
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.arrow.up {
+  top: 10px;
+}
+
+.arrow.down {
+  bottom: 10px;
+}
+
+.arrow i {
+  font-size: 16px;
+}
+
+/* Scrollbar */
+.grid-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.grid-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.grid-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.grid-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

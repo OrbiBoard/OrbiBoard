@@ -227,11 +227,30 @@ function initAboutPage() {
   // 详细信息切换
   const toggleBtn = document.getElementById('about-toggle-details');
   const detailsArea = document.getElementById('about-details-area');
-  if (toggleBtn && detailsArea) {
+  if (toggleBtn && detailsArea && toggleBtn.dataset.bound !== '1') {
+    toggleBtn.dataset.bound = '1';
     toggleBtn.addEventListener('click', () => {
       const isHidden = detailsArea.hidden;
       detailsArea.hidden = !isHidden;
       toggleBtn.classList.toggle('active', !isHidden);
+    });
+  }
+
+  // 仓库按钮
+  const repoBtn = document.getElementById('about-repo');
+  if (repoBtn && repoBtn.dataset.bound !== '1') {
+    repoBtn.dataset.bound = '1';
+    repoBtn.addEventListener('click', async () => {
+      const url = 'https://github.com/OrbiBoard/OrbiBoard';
+      try {
+        if (window.settingsAPI?.openExternal) {
+          await window.settingsAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+      } catch (e) {
+        window.open(url, '_blank');
+      }
     });
   }
 }

@@ -85,6 +85,16 @@ contextBridge.exposeInMainWorld('settingsAPI', {
   onNavigate: (handler) => {
     ipcRenderer.on('settings:navigate', (_e, page) => handler && handler(page));
   },
+  // 监听配置更改
+  onConfigChanged: (handler) => {
+    const listener = (_e, payload) => handler && handler(payload);
+    ipcRenderer.on('sys:config-changed', listener);
+    return () => ipcRenderer.removeListener('sys:config-changed', listener);
+  },
+  // 窗口状态变化监听
+  onWindowStateChanged: (handler) => {
+    ipcRenderer.on('window-state-changed', (_e, payload) => handler && handler(payload));
+  },
   // 进度事件订阅（主进程通过 'plugin-progress' 推送）
   onProgress: (handler) => {
     try {
@@ -128,6 +138,7 @@ contextBridge.exposeInMainWorld('settingsAPI', {
     ipcRenderer.send('automation:confirm:result', id, !!approved);
   },
   // 系统接口
+  getWallpaper: () => ipcRenderer.invoke('system:getWallpaper'),
   getAppInfo: () => ipcRenderer.invoke('system:getAppInfo'),
   getAutostart: () => ipcRenderer.invoke('system:getAutostart'),
   setAutostart: (enabled, highPriority) => ipcRenderer.invoke('system:setAutostart', enabled, highPriority),

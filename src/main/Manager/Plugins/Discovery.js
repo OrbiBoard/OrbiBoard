@@ -95,7 +95,8 @@ function scanPlugins() {
             if (meta && typeof meta.config === 'object' && meta.config) return meta.config;
           } catch (e) {}
           return undefined;
-        })()
+        })(),
+        permissions: Array.isArray(meta.permissions) ? meta.permissions : []
       });
       // 建立多路映射：name、原始id（可能含点号）、清洗id、规范id本身
       try {
@@ -194,6 +195,7 @@ function scanComponents(pluginsRoot) {
                 } catch (e) {}
                 return undefined;
               })(),
+              permissions: Array.isArray(meta.permissions) ? meta.permissions : [],
               sourcePlugin: { id: p.id, name: p.name }
             });
 
@@ -267,7 +269,8 @@ function scanGlobalComponents(pluginsRoot) {
             if (meta && typeof meta.config === 'object' && meta.config) return meta.config;
           } catch (e) {}
           return undefined;
-        })()
+        })(),
+        permissions: Array.isArray(meta.permissions) ? meta.permissions : []
       });
       try {
         if (name) Registry.nameToId.set(String(name), id);

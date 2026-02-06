@@ -11,6 +11,17 @@
     });
   });
 
+  // 监听窗口状态变化，更新最大化按钮图标
+  window.consoleAPI?.onWindowStateChanged?.((state) => {
+    const isMax = !!state.maximized;
+    const btns = document.querySelectorAll('.win-btn[data-act="maximize"]');
+    btns.forEach(btn => {
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = isMax ? 'ri-checkbox-multiple-blank-line' : 'ri-checkbox-blank-line';
+      btn.title = isMax ? '还原' : '最大化';
+    });
+  });
+
   const logList = document.getElementById('console-log-list');
   const logsCopyAllBtn = document.getElementById('logs-copy-all');
   const logsExportBtn = document.getElementById('logs-export');

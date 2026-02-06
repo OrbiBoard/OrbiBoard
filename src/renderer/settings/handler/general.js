@@ -4,6 +4,7 @@ async function initGeneralSettings() {
   // 子夹（子页面）导航切换（限定在通用设置页面内）
   const subItems = document.querySelectorAll('#page-general .sub-item');
   const subpages = {
+    appearance: document.getElementById('general-appearance'),
     splash: document.getElementById('general-splash'),
     basic: document.getElementById('general-basic'),
     time: document.getElementById('general-time'),
@@ -26,6 +27,8 @@ async function initGeneralSettings() {
   subItems.forEach((b) => b.classList.toggle('active', b.dataset.sub === 'basic'));
 
   const defaults = {
+    themeMode: 'system',
+    themeColor: '#238f4a',
     quoteSource: 'engquote',
     quoteApiUrl: 'https://v1.hitokoto.cn/',
     localQuotes: [],
@@ -52,6 +55,180 @@ async function initGeneralSettings() {
   await window.settingsAPI?.configEnsureDefaults('system', defaults);
   const cfg = await window.settingsAPI?.configGetAll('system');
 
+  // 主题设置逻辑
+  const themeModeRadios = document.querySelectorAll('input[name="themeMode"]');
+  const colorPickerContainer = document.getElementById('theme-color-picker');
+  const customColorInput = document.getElementById('theme-color-custom');
+  
+  // 预设颜色列表
+  const presetColors = ['#238f4a', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#14b8a6', '#6366f1'];
+  
+  // 提取图片主色调
+  const extractColors = async (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const max = 200;
+          let w = img.width;
+          let h = img.height;
+          if (w > max || h > max) {
+            if (w > h) { h = Math.round(h * max / w); w = max; }
+            else { w = Math.round(w * max / h); h = max; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          const colorCounts = {};
+          const quantization = 24;
+          for (let i = 0; i < data.length; i += 16) {
+            const r = Math.floor(data[i] / quantization) * quantization;
+            const g = Math.floor(data[i + 1] / quantization) * quantization;
+            const b = Math.floor(data[i + 2] / quantization) * quantization;
+            if (data[i + 3] < 128) continue;
+            const key = `${r},${g},${b}`;
+            colorCounts[key] = (colorCounts[key] || 0) + 1;
+          }
+          const sorted = Object.entries(colorCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([key]) => {
+              const [r, g, b] = key.split(',').map(Number);
+              return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            });
+          resolve(sorted);
+        } catch (e) { reject(e); }
+      };
+      img.onerror = () => reject(new Error('Load image failed'));
+      img.src = url;
+    });
+  };
+
+  // 渲染取色器
+  const renderColorPicker = (selectedColor, useColors = null) => {
+    if (!colorPickerContainer) return;
+    colorPickerContainer.innerHTML = '';
+    
+    const colors = useColors || presetColors;
+
+    // 如果是壁纸取色模式，添加返回按钮
+    if (useColors) {
+      const backBtn = document.createElement('div');
+      backBtn.className = 'color-dot custom';
+      backBtn.innerHTML = '<i class="ri-arrow-left-line"></i>';
+      backBtn.title = '返回预设';
+      backBtn.onclick = () => renderColorPicker(selectedColor);
+      colorPickerContainer.appendChild(backBtn);
+    }
+    
+    // 颜色按钮
+    colors.forEach(c => {
+      const btn = document.createElement('div');
+      btn.className = 'color-dot';
+      btn.style.backgroundColor = c;
+      if (c.toLowerCase() === selectedColor.toLowerCase()) btn.classList.add('selected');
+      btn.onclick = async () => {
+        document.querySelectorAll('.color-dot.selected').forEach(d => d.classList.remove('selected'));
+        btn.classList.add('selected');
+        
+        await window.settingsAPI?.configSet('system', 'themeColor', c);
+        if (window._currentThemeConfig) window._currentThemeConfig.color = c;
+        const mode = document.querySelector('input[name="themeMode"]:checked')?.value || 'system';
+        window.applyTheme?.(mode, c);
+      };
+      colorPickerContainer.appendChild(btn);
+    });
+
+    if (!useColors) {
+      // 壁纸取色按钮
+      const wpBtn = document.createElement('div');
+      wpBtn.className = 'color-dot custom wp-picker';
+      wpBtn.innerHTML = '<i class="ri-image-2-line"></i>';
+      wpBtn.title = '从壁纸取色';
+      wpBtn.onclick = async () => {
+        if (wpBtn.classList.contains('loading')) return;
+        const originHtml = wpBtn.innerHTML;
+        wpBtn.classList.add('loading');
+        wpBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i>';
+        try {
+          const path = await window.settingsAPI.getWallpaper();
+          if (!path) throw new Error('未找到壁纸');
+          const url = 'file://' + path.replace(/\\/g, '/');
+          const extracted = await extractColors(url);
+          if (!extracted || !extracted.length) throw new Error('未提取到颜色');
+          renderColorPicker(selectedColor, extracted);
+        } catch (e) {
+          console.error(e);
+          alert('取色失败：' + (e.message || '未知错误'));
+          wpBtn.innerHTML = originHtml;
+          wpBtn.classList.remove('loading');
+        }
+      };
+      colorPickerContainer.appendChild(wpBtn);
+
+      // 自定义颜色按钮（+号或色轮）
+      const customBtn = document.createElement('div');
+      customBtn.className = 'color-dot custom';
+      customBtn.innerHTML = '<i class="ri-add-line"></i>';
+      // 检查是否是预设之外的颜色
+      const isCustom = !presetColors.includes(selectedColor);
+      if (isCustom) {
+        customBtn.classList.add('selected');
+        customBtn.style.backgroundColor = selectedColor;
+        customBtn.innerHTML = ''; 
+      }
+      
+      customBtn.onclick = () => {
+        customColorInput.click();
+      };
+      colorPickerContainer.appendChild(customBtn);
+    }
+  };
+
+  // 初始化 UI 状态
+  const currentMode = cfg.themeMode || 'system';
+  themeModeRadios.forEach(r => {
+    if (r.value === currentMode) r.checked = true;
+    r.addEventListener('change', async () => {
+      if (r.checked) {
+        await window.settingsAPI?.configSet('system', 'themeMode', r.value);
+        if (window._currentThemeConfig) window._currentThemeConfig.mode = r.value;
+        // 获取最新的主题色配置，确保切换模式时颜色不变
+        const currentColor = window._currentThemeConfig?.color || cfg.themeColor || '#238f4a';
+        window.applyTheme?.(r.value, currentColor);
+      }
+    });
+  });
+  
+  if (customColorInput) {
+    customColorInput.value = cfg.themeColor || '#238f4a';
+    customColorInput.addEventListener('change', async () => {
+      const val = customColorInput.value;
+      cfg.themeColor = val; // 更新本地缓存
+      if (window._currentThemeConfig) window._currentThemeConfig.color = val;
+      await window.settingsAPI?.configSet('system', 'themeColor', val);
+      // 仅更新UI选中状态，不全量重绘
+      const mode = document.querySelector('input[name="themeMode"]:checked')?.value || 'system';
+      window.applyTheme?.(mode, val);
+      // 更新预设按钮选中态
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+      const customBtn = document.querySelector('.color-dot.custom');
+      if (customBtn) {
+        customBtn.classList.add('selected');
+        customBtn.style.backgroundColor = val;
+        customBtn.innerHTML = '';
+      }
+    });
+  }
+  
+  // 初始渲染 UI (不重复调用 applyTheme，因为已全局初始化)
+  const initColor = cfg.themeColor || '#238f4a';
+  renderColorPicker(initColor);
+  
   // 启动页与名言相关控件
   const splashEnabled = document.getElementById('splash-enabled');
   const splashQuoteEnabled = document.getElementById('splash-quote-enabled');

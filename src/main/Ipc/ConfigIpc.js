@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron');
+const { ipcMain, BrowserWindow } = require('electron');
 const store = require('../Manager/Store/Main');
 const pluginManager = require('../Manager/Plugins/Main');
 const backendLog = require('../Debug/backendLog');
@@ -13,6 +13,12 @@ function register() {
   ipcMain.handle('config:set', async (_e, scope, key, value) => {
     const r = store.set(scope, key, value);
     try {
+      // 广播配置更改事件
+      BrowserWindow.getAllWindows().forEach(win => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('sys:config-changed', { scope, key, value });
+        }
+      });
       if (scope === 'system' && key === 'developerMode') {
         backendLog.enableLogging(true);
       }

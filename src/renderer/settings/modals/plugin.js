@@ -8,7 +8,7 @@ async function showPluginAboutModal(pluginItem) {
   box.style.flexDirection = 'column';
 
   const title = document.createElement('div'); title.className = 'modal-title';
-  title.innerHTML = `<i class="${pluginItem.icon || 'ri-puzzle-line'}"></i> 关于插件 - ${pluginItem.name}`;
+  title.innerHTML = `<i class="${pluginItem.icon || 'ri-puzzle-line'}"></i> 关于 - ${pluginItem.name}`;
   
   const body = document.createElement('div'); body.className = 'modal-body';
   body.style.flex = '1';
@@ -98,8 +98,8 @@ async function showPluginAboutModal(pluginItem) {
   metaGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
   metaGrid.style.gap = '10px';
   metaGrid.innerHTML = `
-    <div><div class="muted">插件名称</div><div>${pluginItem.name || '未知'}</div></div>
-    <div><div class="muted">插件ID</div><div style="word-break: break-all; overflow-wrap: anywhere;">${pluginItem.id || '未知'}</div></div>
+    <div><div class="muted">名称</div><div>${pluginItem.name || '未知'}</div></div>
+    <div><div class="muted">ID</div><div style="word-break: break-all; overflow-wrap: anywhere;">${pluginItem.id || '未知'}</div></div>
     <div><div class="muted">版本</div><div id="plugin-ver-slot"></div></div>
     <div><div class="muted">作者</div><div>${authorText}</div></div>
     ${homepage ? `<div><div class="muted">主页</div><div><a href="${homepage}" target="_blank" rel="noreferrer">${homepage}</a></div></div>` : ''}
@@ -258,7 +258,7 @@ async function showPluginAboutModal(pluginItem) {
     featContent.innerHTML = '';
     const acts = Array.isArray(pluginItem.actions) ? pluginItem.actions : [];
     if (acts.length === 0) {
-        featContent.innerHTML = '<div class="muted" style="padding: 20px; text-align: center;">该插件未定义任何动作</div>';
+        featContent.innerHTML = '<div class="muted" style="padding: 20px; text-align: center;">未定义任何动作</div>';
         return;
     }
     const actList = document.createElement('div');
@@ -314,7 +314,7 @@ async function showPluginAboutModal(pluginItem) {
         
         featContent.innerHTML = '';
         if (events.length === 0) {
-            featContent.innerHTML = '<div class="muted" style="padding: 20px; text-align: center;">该插件未注册任何事件</div>';
+            featContent.innerHTML = '<div class="muted" style="padding: 20px; text-align: center;">未注册任何事件</div>';
             return;
         }
         
@@ -374,14 +374,14 @@ async function showPluginAboutModal(pluginItem) {
   
   // Tab switch logic
   ftAction.onclick = () => {
-      ftAction.style.fontWeight = 'bold'; ftAction.style.color = 'var(--fg)';
-      ftEvent.style.fontWeight = 'normal'; ftEvent.style.color = 'var(--muted)';
-      renderActions();
+    ftAction.style.fontWeight = 'bold'; ftAction.style.color = 'var(--fg)';
+    ftEvent.style.fontWeight = 'normal'; ftEvent.style.color = 'var(--muted)';
+    renderActions();
   };
   ftEvent.onclick = () => {
-      ftEvent.style.fontWeight = 'bold'; ftEvent.style.color = 'var(--fg)';
-      ftAction.style.fontWeight = 'normal'; ftAction.style.color = 'var(--muted)';
-      renderEvents();
+    ftEvent.style.fontWeight = 'bold'; ftEvent.style.color = 'var(--fg)';
+    ftAction.style.fontWeight = 'normal'; ftAction.style.color = 'var(--muted)';
+    renderEvents();
   };
   
   // Initial render
@@ -437,7 +437,7 @@ async function showPluginAboutModal(pluginItem) {
               document.body.removeChild(overlay);
               showPluginAboutModal(target);
           } else {
-              showToast('该插件未安装，无法查看详情', { type: 'warning' });
+              showToast('未安装，无法查看详情', { type: 'warning' });
           }
       };
       depsList.appendChild(row);
@@ -446,7 +446,7 @@ async function showPluginAboutModal(pluginItem) {
     const empty = document.createElement('div');
     empty.className = 'muted';
     empty.style.padding = '10px';
-    empty.textContent = '无插件依赖';
+    empty.textContent = '无依赖';
     depsList.appendChild(empty);
   }
   
@@ -528,7 +528,7 @@ async function showPluginAboutModal(pluginItem) {
   const configDesc = document.createElement('div');
   configDesc.className = 'muted';
   configDesc.style.marginTop = '12px';
-  configDesc.textContent = '请在“配置总览”中查找并修改该插件的配置项';
+  configDesc.textContent = '请在“配置总览”中查找并修改该配置项';
   
   configPanel.appendChild(configBtn);
   configPanel.appendChild(configDesc);
@@ -584,7 +584,7 @@ async function showPluginAboutModal(pluginItem) {
 
   const actions = document.createElement('div'); actions.className = 'modal-actions';
   const createBtn = document.createElement('button'); createBtn.className = 'btn'; createBtn.textContent = '创建快捷方式';
-  const uninstallBtn = document.createElement('button'); uninstallBtn.className = 'btn danger'; uninstallBtn.textContent = '卸载插件';
+  const uninstallBtn = document.createElement('button'); uninstallBtn.className = 'btn danger'; uninstallBtn.textContent = '卸载';
   const closeBtn = document.createElement('button'); closeBtn.className = 'btn secondary'; closeBtn.textContent = '关闭';
 
   closeBtn.onclick = () => { document.body.removeChild(overlay); };
@@ -605,7 +605,7 @@ async function showPluginAboutModal(pluginItem) {
     for (const e of eventDefs) {
       candidates.push({ kind: 'event', id: e.id || e.name, label: e.name || e.id, icon: pluginItem.icon || 'ri-links-line', def: e });
     }
-    if (!candidates.length) { await showAlert('该插件未定义可用于快捷方式的动作'); return; }
+    if (!candidates.length) { await showAlert('未定义可用于快捷方式的动作'); return; }
 
     let chosen = null; let params = [];
     if (candidates.length === 1) {
@@ -641,16 +641,15 @@ async function showPluginAboutModal(pluginItem) {
   };
 
   uninstallBtn.onclick = async () => {
-    const res = await showModal({ title: '卸载插件', message: `确认卸载插件：${pluginItem.name}？\n这将删除其目录与相关文件。`, confirmText: '卸载', cancelText: '取消' });
+    const res = await showModal({ title: '卸载', message: `确认卸载：${pluginItem.name}？\n这将删除其目录与相关文件。`, confirmText: '卸载', cancelText: '取消' });
     if (!res) return;
     const key = pluginItem.id || pluginItem.name;
     const out = await window.settingsAPI?.uninstallPlugin?.(key);
     if (!out?.ok) { await showAlert(`卸载失败：${out?.error || '未知错误'}`); return; }
     // 关闭并刷新列表
     document.body.removeChild(overlay);
-    const container = document.getElementById('plugins');
-    const list = await fetchPlugins();
-    container.innerHTML = ''; list.forEach((p) => container.appendChild(renderPlugin(p)));
+    if (typeof window.refreshComponents === 'function') window.refreshComponents();
+    if (typeof window.initPluginsPage === 'function') window.initPluginsPage();
   };
 
   // 初始切换
@@ -667,41 +666,4 @@ async function showPluginAboutModal(pluginItem) {
   document.body.appendChild(overlay);
 }
 
-
-// 选择插件动作（meta actions + automation events）
-async function showActionSelector(candidates) {
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
-    const box = document.createElement('div'); box.className = 'modal-box';
-    const title = document.createElement('div'); title.className = 'modal-title'; title.textContent = '选择动作';
-    const body = document.createElement('div'); body.className = 'modal-body';
-    const list = document.createElement('div'); list.className = 'array-list';
-    let selected = null;
-
-    candidates.forEach((c) => {
-    const row = document.createElement('div'); row.className = 'action-item';
-    const icon = document.createElement('i'); icon.className = c.icon || 'ri-links-line';
-    const label = document.createElement('div'); label.textContent = `${c.label}`;
-    label.style.flex = '1'; label.style.marginLeft = '8px';
-    const kind = document.createElement('span'); kind.className = 'muted'; kind.textContent = c.kind === 'event' ? '事件' : '动作';
-    kind.style.marginLeft = '8px';
-    const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'actionSel';
-      radio.addEventListener('change', () => { selected = { kind: c.kind, id: c.id }; });
-      row.appendChild(radio); row.appendChild(icon); row.appendChild(label); row.appendChild(kind);
-      list.appendChild(row);
-    });
-
-    const actions = document.createElement('div'); actions.className = 'modal-actions';
-    const cancel = document.createElement('button'); cancel.className='btn secondary'; cancel.textContent='取消';
-    cancel.onclick = () => { document.body.removeChild(overlay); resolve(null); };
-    const ok = document.createElement('button'); ok.className='btn primary'; ok.textContent='确定';
-    ok.onclick = () => { if (!selected) { return; } document.body.removeChild(overlay); resolve(selected); };
-    box.appendChild(title);
-    body.appendChild(list);
-    box.appendChild(body);
-    actions.appendChild(cancel); actions.appendChild(ok);
-    box.appendChild(actions);
-    overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  });
-}
+window.showPluginAboutModal = showPluginAboutModal;

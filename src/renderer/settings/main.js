@@ -1,6 +1,45 @@
 async function main() {
   if (window.__settingsMainRan) return;
   window.__settingsMainRan = true;
+
+  // 立即加载主题
+  try { window.initTheme?.(); } catch (e) {}
+
+  // 移除加载遮罩
+  setTimeout(() => {
+    const mask = document.getElementById('loading-mask');
+    if (mask) {
+      mask.classList.add('hidden');
+      setTimeout(() => mask.remove(), 400); // 动画结束后移除 DOM
+    }
+  }, 1200); // 稍微延迟以展示动画效果
+
+  // Alpha Banner Close Logic
+  const alphaBanner = document.querySelector('.alpha-banner');
+  const closeAlphaBtn = document.getElementById('close-alpha-banner');
+  if (alphaBanner && closeAlphaBtn) {
+    const isHidden = localStorage.getItem('hideAlphaBanner') === 'true';
+    if (isHidden) {
+      alphaBanner.style.display = 'none';
+    } else {
+      closeAlphaBtn.addEventListener('click', () => {
+        alphaBanner.style.display = 'none';
+        localStorage.setItem('hideAlphaBanner', 'true');
+      });
+    }
+  }
+
+  // 水印时间戳
+  const tsEl = document.getElementById('build-timestamp');
+  if (tsEl) {
+    const updateTime = () => {
+      const now = new Date();
+      tsEl.textContent = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    };
+    updateTime(); // 立即执行一次
+    setInterval(updateTime, 1000); // 每秒更新
+  }
+
   // 获取开发环境标记
   let isDev = true;
   try {
@@ -77,7 +116,12 @@ async function main() {
       for (const key of Object.keys(pages)) {
         pages[key].hidden = key !== page;
       }
-    if (page === 'npm') {
+
+      // 重置 content 的 mask 类
+      const content = document.getElementById('content');
+      if (content) content.classList.remove('scroll-mask-top', 'scroll-mask-bottom', 'scroll-mask-both');
+
+      if (page === 'npm') {
     window.renderInstalled?.();
   } else if (page === 'general') {
     initGeneralSettings();
@@ -209,6 +253,70 @@ async function main() {
     });
   });
 
+  // 窗口图标点击菜单（模拟 Win32 窗口左上角行为）
+  try {
+    const winIcon = document.querySelector('.sidebar .logo');
+    const logoNormal = winIcon?.querySelector('.logo-normal');
+    const logoActive = winIcon?.querySelector('.logo-active');
+    const closeBtn = winIcon?.querySelector('.close-win');
+    const collapseBtn = winIcon?.querySelector('.collapse-menu');
+
+    if (winIcon && logoNormal && logoActive) {
+      let isMenuActive = false;
+
+      // 打开菜单逻辑
+      const openMenu = () => {
+        if (isMenuActive) return;
+        isMenuActive = true;
+        
+        // 切换 UI 状态
+        winIcon.classList.add('active');
+        logoNormal.hidden = true;
+        logoActive.hidden = false;
+
+        // 计算位置：直接位于 Logo 下方，且宽度对齐
+        const r = winIcon.getBoundingClientRect();
+        // 传递 onClose 回调
+        window.showAppMenu({ x: 0, y: r.bottom }, () => {
+          // 菜单关闭时的回调：恢复状态
+          isMenuActive = false;
+          winIcon.classList.remove('active');
+          logoNormal.hidden = false;
+          logoActive.hidden = true;
+        }, 'logo-menu');
+      };
+
+      // 单击 Logo (Normal 状态) -> 打开菜单
+      logoNormal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMenu();
+      });
+
+      // 激活状态下的按钮事件
+      closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // 尝试关闭菜单（如果已打开）
+        if (isMenuActive) {
+            // 模拟点击遮罩层以关闭菜单
+            document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        }
+        // 执行关闭窗口
+        window.settingsAPI?.windowControl('close');
+      });
+
+      collapseBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // 模拟点击遮罩层以关闭菜单（因为 showAppMenu 绑定了 mousedown 关闭）
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      });
+
+      // 设置鼠标手势
+      winIcon.style.cursor = 'default'; // 容器默认
+      logoNormal.style.cursor = 'pointer'; // 仅普通状态可点击
+      winIcon.style.webkitAppRegion = 'no-drag';
+    }
+  } catch (e) {}
+
   try {
     const titlebar = document.querySelector('.titlebar');
     titlebar?.addEventListener('contextmenu', (e) => {
@@ -241,6 +349,48 @@ async function main() {
       }
     } catch (e) {}
   } catch (e) {}
+
+  // 监听窗口状态变化，更新最大化按钮图标
+  window.settingsAPI?.onWindowStateChanged?.((state) => {
+    const isMax = !!state.maximized;
+    const btns = document.querySelectorAll('.win-btn[data-act="maximize"]');
+    btns.forEach(btn => {
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = isMax ? 'ri-checkbox-multiple-blank-line' : 'ri-checkbox-blank-line';
+      btn.title = isMax ? '还原' : '最大化';
+    });
+  });
+
+  // 监听 #content 滚动以更新 Mask 样式
+  const content = document.getElementById('content');
+  if (content) {
+    const updateContentScrollMask = () => {
+      const isTop = content.scrollTop <= 0;
+      const isBottom = content.scrollTop + content.clientHeight >= content.scrollHeight - 1; // 容差1px
+      
+      content.classList.remove('scroll-mask-top', 'scroll-mask-bottom', 'scroll-mask-both');
+
+      if (content.scrollHeight > content.clientHeight) {
+        if (isTop && !isBottom) content.classList.add('scroll-mask-bottom');
+        else if (!isTop && isBottom) content.classList.add('scroll-mask-top');
+        else if (!isTop && !isBottom) content.classList.add('scroll-mask-both');
+      }
+    };
+    
+    content.addEventListener('scroll', updateContentScrollMask);
+    // 监听窗口大小变化
+    window.addEventListener('resize', updateContentScrollMask);
+    
+    // 由于内容动态加载，使用 MutationObserver 监听子元素变化
+    const observer = new MutationObserver(() => {
+        // 稍微延迟以等待布局更新
+        setTimeout(updateContentScrollMask, 50);
+    });
+    observer.observe(content, { childList: true, subtree: true });
+    
+    // 初始化检测
+    setTimeout(updateContentScrollMask, 100);
+  }
 
   // NPM 管理逻辑（仅展示已安装列表）
   const installedEl = document.getElementById('npm-installed');

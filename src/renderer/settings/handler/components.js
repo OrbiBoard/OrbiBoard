@@ -3,9 +3,22 @@ window.initComponentsPage = async function initComponentsPage() {
   window.__componentsInitRunning = true;
   const container = document.getElementById('components-list');
   const norm = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+  const directClassifyPlugins = ['desktop-launcher', 'desktop-system-status', 'homework-board'];
+
   const createCard = (c) => {
     const el = document.createElement('div');
     el.className = 'plugin-card';
+    
+    // Actions rendering
+    const actionsHtml = Array.isArray(c.actions) && c.actions.length
+      ? c.actions.map(a => `<button class="action-btn" data-action="${a.id}"><i class="${a.icon || ''}"></i> ${a.text || ''}</button>`).join('')
+      : '';
+
+    // Direct classification logic
+    const isDirectClassified = c.sourcePlugin && directClassifyPlugins.includes(c.sourcePlugin);
+    const showProvidedBy = c.sourcePlugin && !isDirectClassified;
+
     el.innerHTML = `
       <div class="card-header">
         <i class="ri-layout-3-line"></i>
@@ -13,21 +26,24 @@ window.initComponentsPage = async function initComponentsPage() {
           <div class="card-title">
             ${c.name || c.id} 
             <span class="pill small">${c.group || '未分组'}</span>
-            ${c.sourcePlugin ? '<span class="pill small" style="background:rgba(var(--color-primary-rgb), 0.1);color:var(--color-primary);">由插件提供</span>' : ''}
+            ${showProvidedBy ? '<span class="pill small" style="background:rgba(var(--color-primary-rgb), 0.1);color:var(--color-primary);">由插件提供</span>' : ''}
           </div>
           <div class="card-desc" style="word-break: break-all; overflow-wrap: anywhere;">入口：${c.entry || 'index.html'}</div>
         </div>
       </div>
       <div class="card-actions">
         <div class="actions-left">
-          <button class="action-btn preview-btn"><i class="ri-eye-line"></i> 预览</button>
+          ${actionsHtml}
         </div>
         <div class="actions-right">
+          <button class="icon-btn preview-btn" title="预览"><i class="ri-eye-line"></i></button>
           <button class="icon-btn about-btn" title="关于组件"><i class="ri-information-line"></i></button>
           ${!c.sourcePlugin ? '<button class="icon-btn uninstall-btn" title="卸载"><i class="ri-delete-bin-line"></i></button>' : ''}
         </div>
       </div>
     `;
+
+    // Preview Button Logic
     const btn = el.querySelector('.preview-btn');
     btn.addEventListener('click', async () => {
       try {
@@ -47,10 +63,40 @@ window.initComponentsPage = async function initComponentsPage() {
         box.appendChild(title); box.appendChild(body); overlay.appendChild(box); document.body.appendChild(overlay);
       } catch (e) {}
     });
+
+    // About Button Logic - Use Plugin Info Modal
     const aboutBtn = el.querySelector('.about-btn');
     aboutBtn?.addEventListener('click', () => {
-      try { showComponentAboutModal(c); } catch (e) {}
+      try { 
+        if (window.showPluginAboutModal) {
+            window.showPluginAboutModal(c); 
+        } else {
+            // Fallback
+            showComponentAboutModal(c);
+        }
+      } catch (e) {}
     });
+
+    // Action Buttons Logic
+    el.querySelectorAll('.action-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const actId = btn.dataset.action;
+          const meta = (c.actions || []).find(a => a.id === actId);
+          if (meta && typeof meta.target === 'string' && meta.target) {
+            // Component actions usually call plugin methods.
+            // If component is "self-contained", we need to know who handles the call.
+            // If it's a plugin-provided component, we likely call the plugin.
+            const key = c.sourcePlugin || c.id || c.name; 
+            // Note: If c.sourcePlugin is set, we assume the plugin handles the action.
+            // If it's a standalone component (no sourcePlugin), currently there's no backend actor unless it's also a plugin.
+            
+            await window.settingsAPI?.pluginCall?.(key, meta.target, Array.isArray(meta.args) ? meta.args : []);
+            return;
+          }
+        });
+    });
+
+
     const uninstallBtn = el.querySelector('.uninstall-btn');
     uninstallBtn?.addEventListener('click', async () => {
       const ok = await showConfirm(`卸载组件：${c.name || c.id}？`);
@@ -60,6 +106,7 @@ window.initComponentsPage = async function initComponentsPage() {
       showToast(`已卸载组件：${c.name || c.id}`, { type: 'success', duration: 2000 });
       await refresh();
     });
+
     if (window.__isDev__) {
       const publishBtn = document.createElement('button');
       publishBtn.className = 'icon-btn publish-btn';
@@ -72,12 +119,41 @@ window.initComponentsPage = async function initComponentsPage() {
     }
     return el;
   };
+
   const refresh = async () => {
     window.__componentsRefreshId = (window.__componentsRefreshId || 0) + 1;
     const rid = window.__componentsRefreshId;
     container.innerHTML = '';
+    
+    // Fetch plugins to merge info for special cases
+    let plugins = [];
+    try {
+        plugins = await window.settingsAPI?.getPlugins?.() || [];
+    } catch(e) {}
+    const pluginMap = new Map(plugins.map(p => [p.id, p]));
+
     const res = await window.settingsAPI?.componentsList?.('');
     const list = (res?.ok && Array.isArray(res.components)) ? res.components : [];
+    
+    // Merge logic
+    list.forEach(c => {
+        if (c.sourcePlugin && directClassifyPlugins.includes(c.sourcePlugin)) {
+            const p = pluginMap.get(c.sourcePlugin);
+            if (p) {
+                // Merge actions if component doesn't have them or we want to override
+                if (p.actions && p.actions.length) {
+                    c.actions = p.actions;
+                }
+                // Merge other info if needed for the About modal
+                if (!c.description) c.description = p.description;
+                if (!c.author) c.author = p.author;
+                if (!c.version) c.version = p.version;
+                if (!c.dependencies) c.dependencies = p.dependencies;
+                if (!c.npmDependencies) c.npmDependencies = p.npmDependencies;
+            }
+        }
+    });
+
     const uniq = [];
     const seenId = new Set();
     const seenUrl = new Set();
@@ -106,5 +182,7 @@ window.initComponentsPage = async function initComponentsPage() {
     if (rid !== window.__componentsRefreshId) return;
     uniq.forEach((c) => container.appendChild(createCard(c)));
   };
+  
+  window.refreshComponents = refresh; // Expose for modal uninstall callback
   try { await refresh(); } finally { window.__componentsInitRunning = false; }
 };

@@ -360,7 +360,15 @@ function getComponentEntryUrl(idOrName) {
 
 // 为插件入口提供主进程侧可用的 API
 function createPluginApi(pluginId, ipcMain) {
-  return {
+  // 权限检查逻辑
+  const plugin = Registry.findPluginByIdOrName(pluginId);
+  // 兼容策略：如果插件未声明 permissions 字段，默认为拥有所有权限（all），以保证旧插件不崩溃。
+  // 新插件应显式声明 permissions: [] 或具体权限。
+  const isLegacy = !plugin || !Array.isArray(plugin.permissions);
+  const permissions = isLegacy ? new Set(['all']) : new Set(plugin.permissions);
+  const hasPermission = (perm) => permissions.has(perm) || permissions.has('all');
+
+  const api = {
     call: (targetPluginId, fnName, args) => callFunction(targetPluginId, fnName, args, pluginId, ipcMain),
     callByAction: async (actionId, args) => {
       try { const res = await callAction(actionId, Array.isArray(args) ? args : [], pluginId, ipcMain); return res; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
@@ -378,44 +386,14 @@ function createPluginApi(pluginId, ipcMain) {
         try { return getComponentEntryUrl(idOrName); } catch (e) { return { ok: false, error: e?.message || String(e) }; }
       }
     },
-    // 为插件提供自动化计时器接口（减少插件自行创建定时器）
-    automation: {
-      // 新增：注册“分钟触发器”（仅 HH:MM 列表与回调）
-      registerMinuteTriggers: (times, cb) => {
-        try {
-          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
-          return Registry.automationManagerRef.registerPluginMinuteTriggers(pluginId, Array.isArray(times) ? times : [], cb);
-        } catch (e) {
-          return { ok: false, error: e?.message || String(e) };
-        }
-      },
-      clearMinuteTriggers: () => {
-        try {
-          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
-          return Registry.automationManagerRef.clearPluginMinuteTriggers(pluginId);
-        } catch (e) {
-          return { ok: false, error: e?.message || String(e) };
-        }
-      },
-      listMinuteTriggers: () => {
-        try {
-          if (!Registry.automationManagerRef) return { ok: true, times: [] };
-          return Registry.automationManagerRef.listPluginMinuteTriggers(pluginId) || { ok: true, times: [] };
-        } catch (e) {
-          return { ok: false, error: e?.message || String(e) };
-        }
-      },
-      // 为插件提供“创建动作快捷方式到桌面”的接口
-      createActionShortcut: (options) => {
-        try {
-          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
-          return Registry.automationManagerRef.createActionShortcut(pluginId, options || {});
-        } catch (e) {
-          return { ok: false, error: e?.message || String(e) };
-        }
-      }
+    // 存储 API 默认开放
+    store: {
+      get: (key) => store.get(pluginId, key),
+      set: (key, value) => store.set(pluginId, key, value),
+      getAll: () => store.getAll(pluginId),
+      setAll: (obj) => store.setAll(pluginId, obj)
     },
-    // 启动页文本控制：插件可在初始化期间更新启动页状态文本
+    // 启动页控制 默认开放
     splash: {
       setStatus: (stage, message) => {
         try {
@@ -443,31 +421,20 @@ function createPluginApi(pluginId, ipcMain) {
         try { Registry.progressReporter && Registry.progressReporter({ stage: stage || 'plugin:init', message: finalMsg }); } catch (e) {}
       }
     },
-    // 为插件提供配置存储访问能力
-    store: {
-      get: (key) => store.get(pluginId, key),
-      set: (key, value) => store.set(pluginId, key, value),
-      getAll: () => store.getAll(pluginId),
-      setAll: (obj) => store.setAll(pluginId, obj)
-    },
-    // 为插件提供桌面窗口能力
-    desktop: {
-      attachToDesktop: (browserWindow) => {
+    // 主题 API 默认开放
+    theme: {
+      get: () => {
         try {
-          if (!browserWindow) return { ok: false, error: 'window_required' };
-          const hwnd = browserWindow.getNativeWindowHandle();
-          const desktop = win32.getDesktopWindow();
-          if (desktop) {
-            win32.setParent(hwnd, desktop);
-            return { ok: true };
-          }
-          return { ok: false, error: 'desktop_not_found' };
-        } catch (e) {
-          return { ok: false, error: e.message };
-        }
+          const sys = store.getAll('system') || {};
+          return {
+            ok: true,
+            mode: sys.themeMode || 'system',
+            color: sys.themeColor || '#238f4a'
+          };
+        } catch (e) { return { ok: false, error: e?.message || String(e) }; }
       }
     },
-    // 获取学生列定义（聚合所有插件的配置）
+    // 获取列定义 默认开放
     getStudentColumnDefs: () => {
       try {
         const defs = [];
@@ -487,6 +454,77 @@ function createPluginApi(pluginId, ipcMain) {
       } catch (e) { return { ok: false, error: e?.message || String(e) }; }
     }
   };
+
+  // --- 敏感权限控制 ---
+
+  // 自动化权限: automation
+  if (hasPermission('automation')) {
+    api.automation = {
+      registerMinuteTriggers: (times, cb) => {
+        try {
+          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
+          return Registry.automationManagerRef.registerPluginMinuteTriggers(pluginId, Array.isArray(times) ? times : [], cb);
+        } catch (e) {
+          return { ok: false, error: e?.message || String(e) };
+        }
+      },
+      clearMinuteTriggers: () => {
+        try {
+          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
+          return Registry.automationManagerRef.clearPluginMinuteTriggers(pluginId);
+        } catch (e) {
+          return { ok: false, error: e?.message || String(e) };
+        }
+      },
+      listMinuteTriggers: () => {
+        try {
+          if (!Registry.automationManagerRef) return { ok: true, times: [] };
+          return Registry.automationManagerRef.listPluginMinuteTriggers(pluginId) || { ok: true, times: [] };
+        } catch (e) {
+          return { ok: false, error: e?.message || String(e) };
+        }
+      },
+      createActionShortcut: (options) => {
+        try {
+          if (!Registry.automationManagerRef) return { ok: false, error: 'automation_manager_missing' };
+          return Registry.automationManagerRef.createActionShortcut(pluginId, options || {});
+        } catch (e) {
+          return { ok: false, error: e?.message || String(e) };
+        }
+      }
+    };
+  }
+
+  // 桌面权限: desktop
+  if (hasPermission('desktop')) {
+    api.desktop = {
+      attachToDesktop: (browserWindow) => {
+        try {
+          if (!browserWindow) return { ok: false, error: 'window_required' };
+          const hwnd = browserWindow.getNativeWindowHandle();
+          const desktop = win32.getDesktopWindow();
+          if (desktop) {
+            win32.setParent(hwnd, desktop);
+            return { ok: true };
+          }
+          return { ok: false, error: 'desktop_not_found' };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      }
+    };
+  }
+
+  // 启动器权限: launcher
+  if (hasPermission('launcher')) {
+    api.launcher = {
+      open: (opts) => { try { require('../AppLauncher').openMenu(opts); } catch (e) { } },
+      close: () => { try { require('../AppLauncher').closeMenu(); } catch (e) { } },
+      toggle: (opts) => { try { require('../AppLauncher').toggleMenu(opts); } catch (e) { } }
+    };
+  }
+
+  return api;
 }
 
 module.exports = {

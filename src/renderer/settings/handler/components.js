@@ -4,8 +4,6 @@ window.initComponentsPage = async function initComponentsPage() {
   const container = document.getElementById('components-list');
   const norm = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-  const directClassifyPlugins = ['desktop-launcher', 'desktop-system-status', 'homework-board'];
-
   const createCard = (c) => {
     const el = document.createElement('div');
     el.className = 'plugin-card';
@@ -15,18 +13,14 @@ window.initComponentsPage = async function initComponentsPage() {
       ? c.actions.map(a => `<button class="action-btn" data-action="${a.id}"><i class="${a.icon || ''}"></i> ${a.text || ''}</button>`).join('')
       : '';
 
-    // Direct classification logic
-    const isDirectClassified = c.sourcePlugin && directClassifyPlugins.includes(c.sourcePlugin);
-    const showProvidedBy = c.sourcePlugin && !isDirectClassified;
-
     el.innerHTML = `
       <div class="card-header">
-        <i class="ri-layout-3-line"></i>
+        <i class="${c.icon || 'ri-layout-3-line'}"></i>
         <div>
           <div class="card-title">
             ${c.name || c.id} 
             <span class="pill small">${c.group || '未分组'}</span>
-            ${showProvidedBy ? '<span class="pill small" style="background:rgba(var(--color-primary-rgb), 0.1);color:var(--color-primary);">由插件提供</span>' : ''}
+            ${c.sourcePlugin ? '<span class="pill small" style="background:rgba(var(--color-primary-rgb), 0.1);color:var(--color-primary);">由插件提供</span>' : ''}
           </div>
           <div class="card-desc" style="word-break: break-all; overflow-wrap: anywhere;">入口：${c.entry || 'index.html'}</div>
         </div>
@@ -52,7 +46,7 @@ window.initComponentsPage = async function initComponentsPage() {
         const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
         const box = document.createElement('div'); box.className = 'modal-box'; box.style.maxWidth = '860px';
         const title = document.createElement('div'); title.className = 'modal-title';
-        title.innerHTML = `<span><i class="ri-layout-3-line"></i> 预览组件 — ${c.name || c.id}</span>`;
+        title.innerHTML = `<span><i class="${c.icon || 'ri-layout-3-line'}"></i> 预览组件 — ${c.name || c.id}</span>`;
         const closeBtn = document.createElement('button'); closeBtn.className = 'btn secondary'; closeBtn.innerHTML = '<i class="ri-close-line"></i>';
         closeBtn.addEventListener('click', () => { try { overlay.remove(); } catch (e) {} });
         title.appendChild(closeBtn);
@@ -135,25 +129,6 @@ window.initComponentsPage = async function initComponentsPage() {
     const res = await window.settingsAPI?.componentsList?.('');
     const list = (res?.ok && Array.isArray(res.components)) ? res.components : [];
     
-    // Merge logic
-    list.forEach(c => {
-        if (c.sourcePlugin && directClassifyPlugins.includes(c.sourcePlugin)) {
-            const p = pluginMap.get(c.sourcePlugin);
-            if (p) {
-                // Merge actions if component doesn't have them or we want to override
-                if (p.actions && p.actions.length) {
-                    c.actions = p.actions;
-                }
-                // Merge other info if needed for the About modal
-                if (!c.description) c.description = p.description;
-                if (!c.author) c.author = p.author;
-                if (!c.version) c.version = p.version;
-                if (!c.dependencies) c.dependencies = p.dependencies;
-                if (!c.npmDependencies) c.npmDependencies = p.npmDependencies;
-            }
-        }
-    });
-
     const uniq = [];
     const seenId = new Set();
     const seenUrl = new Set();

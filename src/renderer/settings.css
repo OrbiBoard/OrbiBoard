@@ -1211,7 +1211,7 @@ select option:selected {
 }
 
 .modal-message {
-  color: #cbd5e1;
+  color: var(--muted);
   white-space: pre-wrap;
   padding: 20px;
 }
@@ -2355,4 +2355,75 @@ input, textarea, .config-editor, .json-editor {
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+/* Range Input Theme Styles */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  height: 28px; /* Touch target size */
+  cursor: pointer;
+  margin: 0;
+  vertical-align: middle;
+}
+
+input[type=range]:focus {
+  outline: none;
+}
+
+/* Track */
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: linear-gradient(to right, var(--accent) var(--progress, 0%), var(--border) var(--progress, 0%));
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+input[type=range]:hover::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--accent) var(--progress, 0%), rgba(255, 255, 255, 0.15) var(--progress, 0%));
+}
+
+/* Thumb */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  margin-top: -6px; /* (4px track - 16px thumb) / 2 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease, box-shadow 0.2s;
+  border: 2px solid #fff; /* Contrast border */
+}
+
+/* Dark mode adjustment for thumb border if needed, 
+   but white border on accent looks good on dark backgrounds too (pop). 
+   Let's use a variable or just white. 
+   Actually, if the background is dark, a dark border might be better to "cut" the track? 
+   No, usually standard is just the knob. */
+input[type=range]::-webkit-slider-thumb {
+  border: 2px solid var(--fg); /* Use foreground color for border ring */
+}
+
+input[type=range]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25);
+}
+
+input[type=range]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type=range]:disabled::-webkit-slider-thumb {
+  background: var(--muted);
+  border-color: var(--muted);
 }

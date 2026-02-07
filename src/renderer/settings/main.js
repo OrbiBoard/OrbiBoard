@@ -694,6 +694,26 @@ NPM依赖：${depNames.length ? depNames.join('，') : '无'}
   
   // Delay slightly to ensure UI is ready
   // setTimeout(checkUpdateNotifications, 1500); // Disabled: Now handled by Main Process NotificationWindow
+
+  // Global handler for Range Input progress fill
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.type === 'range') {
+      const el = e.target;
+      const min = parseFloat(el.min || 0);
+      const max = parseFloat(el.max || 100);
+      const val = parseFloat(el.value || 0);
+      const ratio = (val - min) / (max - min) * 100;
+      el.style.setProperty('--progress', ratio + '%');
+    }
+  });
+  // Initialize existing ranges
+  document.querySelectorAll('input[type="range"]').forEach(el => {
+    const min = parseFloat(el.min || 0);
+    const max = parseFloat(el.max || 100);
+    const val = parseFloat(el.value || 0);
+    const ratio = (val - min) / (max - min) * 100;
+    el.style.setProperty('--progress', ratio + '%');
+  });
 }
 
 main();

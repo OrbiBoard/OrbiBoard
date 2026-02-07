@@ -1,4 +1,35 @@
 (() => {
+  // Theme support: Shim settingsAPI for theme.js
+  if (!window.settingsAPI && window.consoleAPI) {
+    window.settingsAPI = window.consoleAPI;
+  }
+  if (window.initTheme) {
+    window.initTheme();
+  }
+
+  // 监听主题配置变更，实现实时同步
+  if (window.settingsAPI?.onConfigChanged) {
+    window.settingsAPI.onConfigChanged((payload) => {
+      if (payload && payload.scope === 'system') {
+        // payload 结构: { scope, key, value }
+        if (window._currentThemeConfig) {
+          let changed = false;
+          if (payload.key === 'themeMode') {
+            window._currentThemeConfig.mode = payload.value;
+            changed = true;
+          }
+          if (payload.key === 'themeColor') {
+            window._currentThemeConfig.color = payload.value;
+            changed = true;
+          }
+          if (changed) {
+            window.applyTheme(window._currentThemeConfig.mode, window._currentThemeConfig.color);
+          }
+        }
+      }
+    });
+  }
+
   const actions = document.querySelectorAll('.win-btn');
   actions.forEach((btn) => {
     btn.addEventListener('click', async () => {

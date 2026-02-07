@@ -183,5 +183,6 @@ contextBridge.exposeInMainWorld('settingsAPI', {
   }
   ,
   consoleOpen: () => ipcRenderer.invoke('console:open'),
-  backendLogWrite: (level, ...args) => ipcRenderer.invoke('debug:log:write', level, ...args)
+  backendLogWrite: (level, ...args) => ipcRenderer.invoke('debug:log:write', level, ...args),
+  selectFile: (options) => ipcRenderer.invoke('system:selectFile', options)
 });

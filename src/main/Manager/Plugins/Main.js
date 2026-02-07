@@ -148,10 +148,18 @@ module.exports.loadPlugins = async function loadPlugins(onProgress) {
                 Registry.progressReporter && Registry.progressReporter({ stage: 'plugin:init', message: `插件 ${p.name} 初始化完成` });
               } catch (e) {
                 Registry.progressReporter && Registry.progressReporter({ stage: 'plugin:error', message: `插件 ${p.name} 初始化失败：${e?.message || e}` });
+                Registry.pluginErrors.set(p.id, { message: e.message || String(e), stack: e.stack, time: Date.now() });
+                try { console.error(`[PluginError] [${p.name}] Init Failed:`, e); } catch (ex) {}
               }
             }
           }
-        } catch (e) {}
+        } catch (e) {
+            Registry.pluginErrors.set(p.id, { message: e.message || String(e), stack: e.stack, time: Date.now() });
+            status.stage = 'error';
+            status.message = `加载失败: ${e.message}`;
+            onProgress && onProgress({ ...status });
+            try { console.error(`[PluginError] [${p.name}] Load Failed:`, e); } catch (ex) {}
+        }
       } else {
         status.stage = 'missing';
         status.message = '本地插件路径不存在';
@@ -239,6 +247,7 @@ module.exports.toggle = async function toggle(idOrName, enabled) {
         try {
           // 启用前确保依赖注入到插件目录
           try {
+            Registry.pluginErrors.delete(p.id);
             const depsRes = await PackageManager.ensureDeps(p.id);
             try { console.info('plugin:deps', { id: p.id, name: p.name, ok: !!depsRes?.ok }); } catch (e) {}
           } catch (e) {}
@@ -274,10 +283,12 @@ module.exports.toggle = async function toggle(idOrName, enabled) {
             try {
               await Promise.resolve(mod.init(Runtime.createPluginApi(p.id, module.exports._ipcMain || require('electron').ipcMain)));
               logs.push(`[enable] 插件 ${p.name} 初始化完成`);
+              Registry.pluginErrors.delete(p.id);
               try { console.info('plugin:init_done', { id: p.id, name: p.name }); } catch (e) {}
             } catch (e) {
               // 捕获插件初始化错误并显示在日志中
               logs.push(`[enable] 插件 ${p.name} 初始化失败：${e?.message || e}`);
+              Registry.pluginErrors.set(p.id, { message: e.message || String(e), stack: e.stack, time: Date.now() });
               // 同时记录到后端日志
               try { console.error(`[PluginError] [${p.name}] Init Failed:`, e); } catch (ex) {}
               try { console.info('plugin:init_failed', { id: p.id, name: p.name, error: e?.message || String(e) }); } catch (e) {}
@@ -286,6 +297,7 @@ module.exports.toggle = async function toggle(idOrName, enabled) {
         } catch (e) {
           // 捕获模块加载错误（如语法错误）
           logs.push(`[enable] 启用失败：${e?.message || String(e)}`);
+          Registry.pluginErrors.set(p.id, { message: e.message || String(e), stack: e.stack, time: Date.now() });
           try { console.error(`[PluginError] [${p.name}] Enable Failed:`, e); } catch (ex) {}
           try { console.info('plugin:enable_failed', { id: p.id, name: p.name, error: e?.message || String(e) }); } catch (e) {}
         }
@@ -398,6 +410,7 @@ module.exports.getPlugins = function getPlugins() {
     studentColumns: Array.isArray(p.studentColumns) ? p.studentColumns : [],
     // 输出标准插件依赖字段 dependencies（数组），兼容旧存储
     dependencies: Array.isArray(p.dependencies) ? p.dependencies : (Array.isArray(p.pluginDepends) ? p.pluginDepends : undefined),
+    error: Registry.pluginErrors.get(p.id) || null,
     configSchema: (Array.isArray(p.configSchema) || (p.configSchema && typeof p.configSchema === 'object')) ? p.configSchema : undefined
   }));
 };

@@ -667,3 +667,71 @@ async function showPluginAboutModal(pluginItem) {
 }
 
 window.showPluginAboutModal = showPluginAboutModal;
+
+// 新增：动作选择器模态框
+async function showActionSelector(candidates) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    const box = document.createElement('div'); box.className = 'modal-box';
+    box.style.width = '400px';
+
+    const title = document.createElement('div'); title.className = 'modal-title';
+    title.innerHTML = '<i class="ri-list-check"></i> 选择动作或事件';
+    
+    const body = document.createElement('div'); body.className = 'modal-body';
+    body.style.maxHeight = '400px';
+    body.style.overflowY = 'auto';
+
+    const list = document.createElement('div');
+    list.className = 'array-list';
+
+    candidates.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'action-item';
+      row.style.cursor = 'pointer';
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      
+      const kindLabel = c.kind === 'meta' ? '动作' : '事件';
+
+      row.innerHTML = `
+        <i class="${c.icon}" style="font-size: 18px; margin-right: 10px;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: 500;">${c.label}</div>
+            <div class="muted small"><span class="pill small" style="margin-right:4px;">${kindLabel}</span> ${c.id}</div>
+        </div>
+        <i class="ri-arrow-right-s-line muted"></i>
+      `;
+      
+      row.onclick = () => {
+        document.body.removeChild(overlay);
+        resolve(c);
+      };
+      
+      list.appendChild(row);
+    });
+
+    if (candidates.length === 0) {
+       list.innerHTML = '<div class="muted" style="text-align:center; padding:20px;">无可用选项</div>';
+    }
+
+    body.appendChild(list);
+
+    const actions = document.createElement('div'); actions.className = 'modal-actions';
+    const cancel = document.createElement('button'); cancel.className = 'btn secondary'; cancel.textContent = '取消';
+    cancel.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(null);
+    };
+    
+    actions.appendChild(cancel);
+    
+    box.appendChild(title);
+    box.appendChild(body);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+window.showActionSelector = showActionSelector;

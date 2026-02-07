@@ -74,6 +74,7 @@ function renderPlugin(item) {
     <div class="card-actions">
       <div class="actions-left">${actionsHtml}</div>
       <div class="actions-right">
+        ${item.error ? `<button class="icon-btn error-btn text-danger" title="加载出错" style="color: #ef4444;"><i class="ri-error-warning-fill"></i></button>` : ''}
         <button class="icon-btn about-btn" title="关于插件"><i class="ri-information-line"></i></button>
         <button class="icon-btn create-shortcut-btn" title="创建快捷方式"><i class="ri-links-line"></i></button>
         <button class="icon-btn uninstall-btn" title="卸载"><i class="ri-delete-bin-line"></i></button>
@@ -83,6 +84,28 @@ function renderPlugin(item) {
 
   try {
     el.querySelectorAll('.action-btn').forEach((btn) => { btn.disabled = !item.enabled; });
+    const errBtn = el.querySelector('.error-btn');
+    if (errBtn) {
+      errBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const msgDiv = document.createElement('div');
+        const title = document.createElement('div');
+        title.innerHTML = '<b>插件加载出错</b>';
+        const errBox = document.createElement('div');
+        errBox.style.cssText = 'max-height: 200px; overflow:auto; white-space:pre-wrap; background:var(--bg-secondary); padding:8px; margin-top:8px; border-radius:4px; font-family:monospace; user-select:text;';
+        errBox.textContent = (item.error && typeof item.error === 'object') ? (item.error.message || JSON.stringify(item.error, null, 2)) : String(item.error);
+        if (item.error && item.error.stack) {
+           errBox.textContent += '\n\n' + item.error.stack;
+        }
+        msgDiv.appendChild(title);
+        msgDiv.appendChild(errBox);
+        if (typeof showAlert === 'function') {
+           showAlert(msgDiv, '错误详情');
+        } else {
+           alert(`插件加载出错：\n${errBox.textContent}`);
+        }
+      });
+    }
   } catch (e) {}
 
   // 开发环境：卡片视图下，将卸载、重载、发布合并到“更多”菜单
@@ -642,12 +665,7 @@ async function renderPluginsByMode(mode) {
   renderPluginSubnav(list);
   
   container.innerHTML = '';
-  const hiddenPlugins = ['desktop-launcher', 'desktop-system-status', 'homework-board'];
-  let filtered = list.filter((p) => {
-    if (String(p.type || 'plugin').toLowerCase() !== 'plugin') return false;
-    if (hiddenPlugins.includes(p.id)) return false;
-    return true;
-  });
+  let filtered = list.filter((p) => String(p.type || 'plugin').toLowerCase() === 'plugin');
   
   if (currentPluginFilter !== 'all') {
       filtered = filtered.filter(p => {

@@ -96,7 +96,5 @@
 /* Console titlebar adjustments */
 .titlebar { padding-right: 0 !important; }
 
-/* 修复控制台按钮颜色发绿的问题 */
-.win-btn {
-    color: #e5e7eb !important;
-}
+/* 移除强制覆盖，使用 titlebar.css 中的变量 */
+/* .win-btn { color: #e5e7eb !important; } */

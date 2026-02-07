@@ -19,6 +19,7 @@ class PluginRegistry {
     this.automationEventRegistry = new Map(); // pluginId -> Array<{ id, name, desc, params, expose }>
     this.functionRegistry = new Map(); // pluginId -> Map(fnName -> function)
     this.eventSubscribers = new Map(); // eventName -> Set(webContentsId)
+    this.pluginErrors = new Map(); // pluginId -> { message, stack, time }
     
     this.progressReporter = null;
     this.missingPluginHandler = null;

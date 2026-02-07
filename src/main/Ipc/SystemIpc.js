@@ -230,6 +230,20 @@ function register() {
       });
     });
   });
+
+  ipcMain.handle('system:selectFile', async (_e, options) => {
+    try {
+      const res = await dialog.showOpenDialog({
+        title: options?.title || '选择文件',
+        filters: options?.filters || [],
+        properties: ['openFile', ...(options?.multiSelections ? ['multiSelections'] : [])]
+      });
+      if (res.canceled) return { canceled: true, paths: [] };
+      return { canceled: false, paths: res.filePaths };
+    } catch (e) {
+      return { canceled: true, error: e?.message || String(e) };
+    }
+  });
 }
 
 module.exports = { register };

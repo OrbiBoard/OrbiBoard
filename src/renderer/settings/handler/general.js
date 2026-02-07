@@ -63,6 +63,73 @@ async function initGeneralSettings() {
   // 预设颜色列表
   const presetColors = ['#238f4a', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#14b8a6', '#6366f1'];
   
+  // 颜色工具函数
+  const colorUtils = {
+    hexToRgb: (hex) => {
+      const bigint = parseInt(hex.slice(1), 16);
+      return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+    },
+    rgbToHex: (r, g, b) => {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    },
+    rgbToHsl: (r, g, b) => {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) h = s = 0;
+      else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h, s, l];
+    },
+    hslToRgb: (h, s, l) => {
+      let r, g, b;
+      if (s === 0) r = g = b = l;
+      else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    },
+    adjustBrightness: (hex, mode) => {
+      const [r, g, b] = colorUtils.hexToRgb(hex);
+      const [h, s, l] = colorUtils.rgbToHsl(r, g, b);
+      let newL = l;
+      // Dark模式：避免过暗 (仅在极暗 < 0.25 时微调，保留更多差异)
+      if (mode === 'dark' && l < 0.25) newL = 0.25 + (l * 0.1); 
+      // Light模式：避免过亮 (仅在极亮 > 0.85 时微压，防止看不清)
+      if (mode === 'light' && l > 0.85) newL = 0.85 - ((1 - l) * 0.1);
+      
+      if (newL === l) return hex;
+      const [nr, ng, nb] = colorUtils.hslToRgb(h, s, newL);
+      return colorUtils.rgbToHex(nr, ng, nb);
+    },
+    // 计算颜色差异 (欧氏距离)
+    colorDiff: (hex1, hex2) => {
+      const [r1, g1, b1] = colorUtils.hexToRgb(hex1);
+      const [r2, g2, b2] = colorUtils.hexToRgb(hex2);
+      return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+    }
+  };
+
   // 提取图片主色调
   const extractColors = async (url) => {
     return new Promise((resolve, reject) => {
@@ -93,14 +160,37 @@ async function initGeneralSettings() {
             const key = `${r},${g},${b}`;
             colorCounts[key] = (colorCounts[key] || 0) + 1;
           }
-          const sorted = Object.entries(colorCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([key]) => {
-              const [r, g, b] = key.split(',').map(Number);
-              return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-            });
-          resolve(sorted);
+          
+          // 获取当前实际模式
+          let mode = document.querySelector('input[name="themeMode"]:checked')?.value || 'system';
+          if (mode === 'system') {
+            mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+
+          const sortedEntries = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+          const resultColors = [];
+          const minDiff = 40; // 最小差异阈值
+
+          for (const [key] of sortedEntries) {
+            if (resultColors.length >= 5) break;
+            const [r, g, b] = key.split(',').map(Number);
+            const rawHex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            const adjustedHex = colorUtils.adjustBrightness(rawHex, mode);
+            
+            // 检查重复（与已选颜色的差异是否足够大）
+            let isDistinct = true;
+            for (const existing of resultColors) {
+              if (colorUtils.colorDiff(adjustedHex, existing) < minDiff) {
+                isDistinct = false;
+                break;
+              }
+            }
+            if (isDistinct) {
+              resultColors.push(adjustedHex);
+            }
+          }
+
+          resolve(resultColors);
         } catch (e) { reject(e); }
       };
       img.onerror = () => reject(new Error('Load image failed'));

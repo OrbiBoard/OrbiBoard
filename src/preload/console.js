@@ -22,5 +22,12 @@ contextBridge.exposeInMainWorld('consoleAPI', {
   ,
   controlWindow: (windowId, action) => ipcRenderer.invoke('console:controlWindow', windowId, action)
   ,
-  exportText: (text, defaultName) => ipcRenderer.invoke('console:exportText', text, defaultName)
+  exportText: (text, defaultName) => ipcRenderer.invoke('console:exportText', text, defaultName),
+  // Theme support
+  configGetAll: (scope) => ipcRenderer.invoke('config:getAll', scope),
+  onConfigChanged: (handler) => {
+    const listener = (_e, payload) => handler && handler(payload);
+    ipcRenderer.on('sys:config-changed', listener);
+    return () => ipcRenderer.removeListener('sys:config-changed', listener);
+  }
 });

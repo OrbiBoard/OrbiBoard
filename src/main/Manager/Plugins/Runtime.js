@@ -329,6 +329,8 @@ function listComponents(group) {
       out.push({ 
         id: p.id, 
         name: p.name, 
+        icon: p.icon || null,
+        actions: p.actions || [],
         group: p.group || null, 
         entry: entryRel, 
         url,
@@ -523,6 +525,11 @@ function createPluginApi(pluginId, ipcMain) {
       toggle: (opts) => { try { require('../AppLauncher').toggleMenu(opts); } catch (e) { } }
     };
   }
+
+  // Native capabilities (exposed if needed, currently mainly for koffi)
+  api.native = {
+    koffi: win32.koffi
+  };
 
   return api;
 }

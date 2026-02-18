@@ -13,6 +13,7 @@
     "../profiles-selector",
     "../rollcall-random",
     "../screen-compass",
+    "../service-toplayer",
     "../smart-listening",
     "../ui-lowbar",
     "../ui-lowbar-caller"

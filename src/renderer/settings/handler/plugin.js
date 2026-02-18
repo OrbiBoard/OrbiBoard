@@ -592,14 +592,16 @@ function renderPluginSubnav(plugins) {
   const validGroups = new Set();
   const pluginMap = new Map(); // name -> plugin
   plugins.forEach(p => {
-      if (String(p.type || 'plugin').toLowerCase() === 'plugin') {
+      const type = String(p.type || 'plugin').toLowerCase();
+      if (type === 'plugin' || type === 'service') {
           pluginMap.set(p.name, p);
       }
   });
 
   // 第一遍扫描：收集明确的 XXX. 分类
   plugins.forEach(p => {
-    if (String(p.type || 'plugin').toLowerCase() !== 'plugin') return;
+    const type = String(p.type || 'plugin').toLowerCase();
+    if (type !== 'plugin' && type !== 'service') return;
     const name = p.name || '';
     const parts = name.split('.');
     if (parts.length > 1) {
@@ -665,7 +667,10 @@ async function renderPluginsByMode(mode) {
   renderPluginSubnav(list);
   
   container.innerHTML = '';
-  let filtered = list.filter((p) => String(p.type || 'plugin').toLowerCase() === 'plugin');
+  let filtered = list.filter((p) => {
+    const type = String(p.type || 'plugin').toLowerCase();
+    return type === 'plugin' || type === 'service'; // Show plugins and services
+  });
   
   if (currentPluginFilter !== 'all') {
       filtered = filtered.filter(p => {

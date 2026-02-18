@@ -93,7 +93,10 @@ module.exports.loadPlugins = async function loadPlugins(onProgress) {
     }
 
     if (p.local) {
-      const isEnabled = !!(Registry.config.enabled[p.id] ?? Registry.config.enabled[p.name]);
+      let isEnabled = !!(Registry.config.enabled[p.id] ?? Registry.config.enabled[p.name]);
+      // Fix: Force enable service.toplayer to prevent "plugin not running" errors
+      if (p.id === 'service.toplayer' || p.id === 'service-toplayer') isEnabled = true;
+
       if (!isEnabled) {
         status.stage = 'disabled';
         status.message = '插件已禁用，跳过初始化';

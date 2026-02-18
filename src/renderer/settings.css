@@ -2116,7 +2116,7 @@ select:focus {
 #page-market .store-left .section-title { margin-bottom: 14px; }
 #page-market #store-subnav .sub-item { background: transparent; border: 1px solid transparent; }
 #page-market #store-subnav .sub-item:hover { background: rgba(255,255,255,0.06); border-color: var(--border); }
-#page-market #store-subnav .sub-item.active { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.45); }
+#page-market #store-subnav .sub-item.active { color: var(--fg) ;background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.45); }
 /* 市场页：左侧隐藏时让右侧占满 */
 #page-market .store-panel.compact {
   grid-template-columns: 1fr !important;

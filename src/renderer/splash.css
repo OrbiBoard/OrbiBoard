@@ -4,6 +4,9 @@
   --muted: #9bd6b8; /* 次级文字颜色 */
   --accent: #22c55e; /* 绿色强调 */
 }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 html, body {
   height: 100%;
 }
@@ -104,3 +107,69 @@ h1 {
 .quote .quote-cn { margin-top: 2px; font-size: 20px; color: var(--muted); }
 .quote .quote-note { margin-top: 1px; font-size: 10px; color: var(--muted); }
 .quote .quote-origin { margin-top: 4px; font-size: 10px; opacity: 0.9; display: none; }
+
+/* 状态栏文本溢出保护 */
+.status {
+  max-width: 40vw; /* 限制最大宽度为视口宽度的 40% */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 无名言模式：居中布局优化 */
+body.no-quote .container {
+  justify-content: center;
+  max-width: 100%; /* 取消默认的 640px 限制，允许全宽 */
+  padding: 0;
+}
+
+body.no-quote .bottom {
+  /* 覆盖默认的 grid 布局，改为 flex 居中 */
+  display: flex;
+  flex-direction: row; /* 保持左右结构 */
+  justify-content: space-between;
+  align-items: center;
+  
+  /* 占据剩余空间 */
+  flex: 0 0 auto;
+  margin: 0;
+  border: none;
+  background: transparent;
+  padding: 0 40px; /* 增加左右内边距 */
+  gap: 20px;
+  width: 100%;
+}
+
+body.no-quote .brand {
+  flex-direction: row;
+  text-align: left;
+  gap: 16px;
+}
+
+body.no-quote .brand img {
+  width: 96px;
+  height: 96px;
+}
+
+body.no-quote .brand h1 {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+body.no-quote .brand .subtitle {
+  font-size: 14px;
+}
+
+body.no-quote .status-wrap {
+  /* 在居中模式下，状态栏可以稍微宽一点，但仍需限制 */
+  max-width: 45%;
+  justify-content: flex-end;
+}
+
+body.no-quote .status {
+  max-width: 100%; /* 容器已限制宽度 */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 16px;
+  font-size: 14px;
+}

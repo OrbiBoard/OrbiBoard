@@ -62,10 +62,27 @@ function callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain) {
     const win = Registry.pluginWindows.get(canonId);
     const wc = win?.webContents || win;
     if (!wc) {
-      if (typeof Registry.missingPluginHandler === 'function') {
-        try { Registry.missingPluginHandler(targetPluginId); } catch (e) {}
+      const isInstalled = !!Registry.findPluginByIdOrName(targetPluginId);
+      if (!isInstalled) {
+        if (typeof Registry.missingPluginHandler === 'function') {
+          try { Registry.missingPluginHandler(targetPluginId, 'plugin_missing', { fnName }); } catch (e) {}
+        }
+        return resolve({ ok: false, error: '目标插件未安装' });
+      } else {
+        if (typeof Registry.missingPluginHandler === 'function') {
+          try { Registry.missingPluginHandler(targetPluginId, 'plugin_not_running', { fnName }); } catch (e) {}
+        }
+        return resolve({ ok: false, error: '目标插件未打开窗口' });
       }
-      return resolve({ ok: false, error: '目标插件未打开窗口或未注册' });
+    }
+
+    // 检查API注册表，提前拦截不存在的函数
+    const apiSet = Registry.apiRegistry.get(canonId);
+    if (apiSet && apiSet.size > 0 && !apiSet.has(fnName)) {
+      if (typeof Registry.missingPluginHandler === 'function') {
+        try { Registry.missingPluginHandler(targetPluginId, 'function_missing', { fnName }); } catch (e) {}
+      }
+      return resolve({ ok: false, error: `Function "${fnName}" not found in plugin "${targetPluginId}"` });
     }
     const reqId = uuidv4();
     const onResult = (event, id, payload) => {
@@ -371,7 +388,26 @@ function createPluginApi(pluginId, ipcMain) {
   const hasPermission = (perm) => permissions.has(perm) || permissions.has('all');
 
   const api = {
-    call: (targetPluginId, fnName, args) => callFunction(targetPluginId, fnName, args, pluginId, ipcMain),
+    // Make call generic to support object arguments
+    call: (targetPluginId, fnName, args) => {
+        // Support passing a single object if the target function expects it, but callFunction expects args array.
+        // If args is not an array, wrap it?
+        // Wait, ipcMain.handle receives (event, ...args).
+        // But callFunction definition is: callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain)
+        // where args is expected to be an array.
+        // If the caller passes an object as 'args', we should wrap it in an array [obj] if the target expects an object.
+        // BUT, callFunction does: Array.isArray(args) ? args : []
+        // So if we pass {id: ...}, it becomes []. That's the bug!
+        
+        // Fix: check if args is array, if not, wrap it if it's defined
+        let safeArgs = [];
+        if (Array.isArray(args)) {
+            safeArgs = args;
+        } else if (args !== undefined) {
+            safeArgs = [args];
+        }
+        return callFunction(targetPluginId, fnName, safeArgs, pluginId, ipcMain);
+    },
     callByAction: async (actionId, args) => {
       try { const res = await callAction(actionId, Array.isArray(args) ? args : [], pluginId, ipcMain); return res; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
     },

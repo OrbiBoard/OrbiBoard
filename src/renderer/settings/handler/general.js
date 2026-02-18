@@ -512,6 +512,13 @@ async function initGeneralSettings() {
         quoteEl.style.display = quoteEnabled ? '' : 'none';
       }
 
+      // 同步 no-quote 类以触发居中布局预览
+      if (!quoteEnabled) {
+        body.classList.add('no-quote');
+      } else {
+        body.classList.remove('no-quote');
+      }
+
       // 根据风格设置CSS变量与背景
       const setVars = (vars) => {
         Object.entries(vars || {}).forEach(([k, v]) => root.style.setProperty(k, v));

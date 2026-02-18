@@ -102,6 +102,9 @@ async function loadQuote() {
     }
   } catch (e) {}
   const showQuote = (await window.splashAPI.configGet('system', 'splashQuoteEnabled')) !== false;
+  if (!showQuote) {
+    document.body.classList.add('no-quote');
+  }
   if (!showQuote && quoteEl) {
     quoteEl.style.display = 'none';
     // 不显示名言时，不进行倒计时，视为立即完成

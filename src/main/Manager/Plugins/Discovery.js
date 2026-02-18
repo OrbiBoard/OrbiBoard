@@ -121,6 +121,23 @@ function scanPlugins() {
 
   scanComponents(pluginsRoot);
   scanGlobalComponents(pluginsRoot);
+
+  // 排序：确保 service 类型插件优先加载（解决依赖问题）
+  Registry.manifest.plugins.sort((a, b) => {
+    const typeA = String(a.type || 'plugin').toLowerCase();
+    const typeB = String(b.type || 'plugin').toLowerCase();
+    
+    // service 优先
+    if (typeA === 'service' && typeB !== 'service') return -1;
+    if (typeA !== 'service' && typeB === 'service') return 1;
+    
+    // 其次 plugin
+    if (typeA === 'plugin' && typeB !== 'plugin') return -1;
+    if (typeA !== 'plugin' && typeB === 'plugin') return 1;
+
+    // 最后 component (或其他)
+    return 0;
+  });
 }
 
 function scanComponents(pluginsRoot) {

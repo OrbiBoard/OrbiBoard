@@ -13,6 +13,7 @@
     "../Plugins/profiles-selector",
     "../Plugins/rollcall-random",
     "../Plugins/screen-compass",
+    "../Plugins/service-toplayer",
     "../Plugins/desktop-widgets",
     "../Plugins/screen-annotate",
     "../Plugins/desktop-launcher",

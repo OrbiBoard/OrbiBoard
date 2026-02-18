@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const store = require('../Manager/Store/Main');
@@ -123,10 +123,49 @@ async function init(appInstance) {
     pluginManager._ipcMain = ipcMain;
 
     pluginManager.init({ manifestPath, configPath });
-    pluginManager.setMissingPluginHandler((id) => {
-      setTimeout(() => {
-        try { __openStore(true, 'plugin', id); } catch (e) {}
-      }, 100);
+    pluginManager.setMissingPluginHandler((id, type, detail) => {
+      // type: 'plugin_missing' | 'plugin_not_running' | 'function_missing'
+      // Default to 'plugin_missing' if undefined (backward compatibility)
+      const errType = type || 'plugin_missing';
+      
+      if (errType === 'plugin_missing') {
+          // Show dialog
+          dialog.showMessageBox({
+            type: 'warning',
+            title: '缺失插件',
+            message: `需要插件 "${id}"`,
+            detail: `当前操作需要插件 "${id}"，但在本地未找到。\n是否尝试在市场中搜索？`,
+            buttons: ['搜索插件', '取消'],
+            defaultId: 0,
+            cancelId: 1,
+            noLink: true
+          }).then(({ response }) => {
+            if (response === 0) {
+               setTimeout(() => {
+                 try { __openStore(true, 'plugin', id); } catch (e) {}
+               }, 100);
+            }
+          });
+      } else if (errType === 'plugin_not_running') {
+          dialog.showMessageBox({
+            type: 'warning',
+            title: '插件未运行',
+            message: `插件 "${id}" 未运行`,
+            detail: `该插件已安装，但当前未启动。\n请尝试重启应用或检查插件设置。`,
+            buttons: ['确定'],
+            noLink: true
+          });
+      } else if (errType === 'function_missing') {
+          const fn = detail?.fnName || '未知函数';
+          dialog.showMessageBox({
+            type: 'warning',
+            title: '功能不支持',
+            message: `功能 "${fn}" 不存在`,
+            detail: `插件 "${id}" 不支持功能 "${fn}"。\n可能是插件版本过旧或功能已移除。`,
+            buttons: ['确定'],
+            noLink: true
+          });
+      }
     });
 
     windowManager.sendSplashProgress({ stage: 'init', message: '初始化插件管理器...' });

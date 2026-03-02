@@ -67,6 +67,33 @@ async function initMarketPage() {
       return 'ri-apps-2-line';
     };
 
+    const tabOrder = ['comprehensive', 'plugins', 'automation', 'components', 'updates'];
+
+    const getTabDirection = (fromTab, toTab) => {
+      const fromIndex = tabOrder.indexOf(fromTab);
+      const toIndex = tabOrder.indexOf(toTab);
+      if (toIndex < fromIndex) return 'left';
+      if (toIndex > fromIndex) return 'right';
+      return 'none';
+    };
+
+    const animateGridSwitch = (direction) => {
+      if (direction === 'none') return;
+
+      gridEl.classList.remove('slide-in-left', 'slide-in-right');
+      gridEl.classList.add('no-fade-in');
+
+      if (direction === 'left') {
+        gridEl.classList.add('slide-in-left');
+      } else {
+        gridEl.classList.add('slide-in-right');
+      }
+
+      setTimeout(() => {
+        gridEl.classList.remove('slide-in-left', 'slide-in-right');
+      }, 350);
+    };
+
     const buildSubnav = (tab) => {
       subnavEl.innerHTML = '';
       // 综合与功能更新不显示左侧分类容器
@@ -223,10 +250,17 @@ async function initMarketPage() {
       if (btn.dataset.bound === '1') return;
       btn.dataset.bound = '1';
       btn.addEventListener('click', () => {
+        const newTab = btn.dataset.storeTab;
+        if (newTab === currentTab) return;
+
+        const direction = getTabDirection(currentTab, newTab);
+
         storeTabs.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        currentTab = btn.dataset.storeTab;
+        currentTab = newTab;
         buildSubnav(currentTab);
+
+        animateGridSwitch(direction);
         renderGrid();
       });
     });

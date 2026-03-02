@@ -1,13 +1,21 @@
 {
   root: 'E:\\OrbiBoard\\OrbiBoard',
   registry: 'https://registry.npmmirror.com',
-  pkgs: [],
+  pkgs: [
+    {
+      name: 'winax',
+      version: 'latest',
+      type: 'tag',
+      alias: undefined,
+      arg: [Result]
+    }
+  ],
   production: false,
   cacheStrict: false,
   cacheDir: 'C:\\Users\\e-pyl\\.npminstall_tarball',
   env: {
     npm_config_registry: 'https://registry.npmmirror.com',
-    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\e-pyl\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com"],"original":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\e-pyl\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com"]}',
+    npm_config_argv: '{"remain":[],"cooked":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\e-pyl\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","winax"],"original":["--fix-bug-versions","--china","--userconfig=C:\\\\Users\\\\e-pyl\\\\.cnpmrc","--disturl=https://cdn.npmmirror.com/binaries/node","--registry=https://registry.npmmirror.com","winax"]}',
     npm_config_user_agent: 'npminstall/7.12.0 npm/? node/v22.17.0 win32 x64',
     npm_config_cache: 'C:\\Users\\e-pyl\\.npminstall_tarball',
     NODE: 'C:\\nvm4w\\nodejs\\node.exe',

@@ -1,6 +1,7 @@
 {
   "id": "clock-widget",
   "name": "简易时钟",
+  "icon": "ri-time-line",
   "version": "1.0.0",
   "type": "component",
   "author": "OrbiBoard",

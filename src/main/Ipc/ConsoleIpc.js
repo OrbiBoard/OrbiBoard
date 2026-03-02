@@ -63,6 +63,15 @@ function register() {
   ipcMain.handle('console:listWindows', async () => {
     try {
       const wins = BrowserWindow.getAllWindows();
+      const manifest = pluginManager.getPlugins ? pluginManager.getPlugins() : [];
+      const appPath = app.getAppPath();
+      const appMetrics = app.getAppMetrics ? app.getAppMetrics() : [];
+      const pidMemoryMap = new Map();
+      appMetrics.forEach(m => {
+        if (m.memory && m.memory.workingSetSize !== undefined) {
+          pidMemoryMap.set(m.pid, m.memory.workingSetSize);
+        }
+      });
       const data = wins.map((w) => {
         let url = '';
         try { url = w.webContents.getURL(); } catch (e) {}
@@ -73,7 +82,34 @@ function register() {
         let webContentsId = null;
         try { webContentsId = w.webContents.id; } catch (e) {}
         let pluginId = null;
+        let isSystemWindow = false;
+        let memoryBytes = 0;
+        let processId = null;
+        let processType = null;
         try { pluginId = pluginManager.getPluginIdByWebContentsId(webContentsId); } catch (e) {}
+        if (!pluginId && url) {
+          if (url.includes('/OrbiBoard/src/') || url.includes(appPath + '/src/')) {
+            isSystemWindow = true;
+          } else {
+            for (const p of manifest) {
+              if (p.local) {
+                const pluginPath = '/plugins/' + p.local + '/';
+                if (url.toLowerCase().includes(pluginPath.toLowerCase())) {
+                  pluginId = p.id;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        try {
+          processId = w.webContents.getOSProcessId ? w.webContents.getOSProcessId() : null;
+        } catch (e) {}
+        const matchingMetric = appMetrics.find(m => m.pid === processId);
+        if (matchingMetric && matchingMetric.memory) {
+          memoryBytes = matchingMetric.memory.workingSetSize || 0;
+          processType = matchingMetric.type;
+        }
         return {
           id: w.id,
           title,
@@ -85,7 +121,11 @@ function register() {
           isFullScreen: (() => { try { return w.isFullScreen(); } catch (e) { return false; } })(),
           webContentsId,
           bounds,
-          pluginId
+          pluginId,
+          isSystemWindow,
+          memoryBytes,
+          processId,
+          processType
         };
       });
       return { ok: true, windows: data };
@@ -128,6 +168,7 @@ function register() {
         case 'close': try { win.close(); } catch (e) {} break;
         case 'fullscreen': try { win.setFullScreen(!win.isFullScreen()); } catch (e) {} break;
         case 'hide': try { win.hide(); } catch (e) {} break;
+        case 'show': try { win.show(); win.focus(); } catch (e) {} break;
         default: break;
       }
       return { ok: true };

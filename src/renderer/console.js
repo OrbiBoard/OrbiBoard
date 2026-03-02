@@ -82,7 +82,8 @@
     sourceId: 'all',
     levels: new Set(['log', 'info', 'warn', 'error']),
     selected: new Set(),
-    lastSelectedIndex: null
+    lastSelectedIndex: null,
+    windowGroupExpandState: {}
   };
 
   function levelColor(level) {
@@ -392,6 +393,107 @@
   }
   metricsRefresh?.addEventListener('click', refreshMetrics);
 
+  function formatMemory(bytes) {
+    if (!bytes || bytes === 0) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function createWindowCard(w, isNested) {
+    const card = document.createElement('div');
+    card.className = isNested ? 'panel window-card-nested' : 'panel';
+    const h = document.createElement('div');
+    h.className = 'plugins-header';
+    h.innerHTML = `
+      <div class="header-left">
+        <h2 style="margin:0;font-size:${isNested ? '14' : '16'}px;">窗口 #${w.id} ${w.title || ''}</h2>
+        <p class="muted window-url" title="${w.url || ''}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.url || ''}</p>
+      </div>
+      <div class="header-right">
+        <button class="btn secondary" data-act="focus"><i class="ri-focus-2-line"></i> 聚焦</button>
+        <button class="btn" data-act="devtools"><i class="ri-code-line"></i> 开发者工具</button>
+        <button class="btn" data-act="more"><i class="ri-more-2-fill"></i> 更多</button>
+      </div>
+    `;
+    card.appendChild(h);
+    const meta = document.createElement('div');
+    meta.style.padding = '8px 0 12px';
+    const sizeText = w.bounds ? `${w.bounds.width}×${w.bounds.height}` : '—';
+    const memoryText = formatMemory(w.memoryBytes);
+    meta.innerHTML = `
+      <span class="pill small">可见 ${w.isVisible ? '是' : '否'}</span>
+      <span class="pill small" style="margin-left:8px;">聚焦 ${w.isFocused ? '是' : '否'}</span>
+      <span class="pill small" style="margin-left:8px;">最小化 ${w.isMinimized ? '是' : '否'}</span>
+      <span class="pill small" style="margin-left:8px;">最大化 ${w.isMaximized ? '是' : '否'}</span>
+      <span class="pill small" style="margin-left:8px;">全屏 ${w.isFullScreen ? '是' : '否'}</span>
+      <span class="pill small" style="margin-left:8px;">尺寸 ${sizeText}</span>
+      <span class="pill small" style="margin-left:8px;">内存 ${memoryText}</span>
+      ${w.processId ? `<span class="pill small" style="margin-left:8px;">PID ${w.processId}</span>` : ''}
+      ${w.webContentsId ? `<span class="pill small" style="margin-left:8px;">WC ${w.webContentsId}</span>` : ''}
+    `;
+    card.appendChild(meta);
+    const btnFocus = h.querySelector('button[data-act="focus"]');
+    const btnDev = h.querySelector('button[data-act="devtools"]');
+    const btnMore = h.querySelector('button[data-act="more"]');
+    btnFocus.addEventListener('click', async () => { try { await window.consoleAPI?.focusWindow?.(w.id); } catch (e) {} });
+    btnDev.addEventListener('click', async () => { try { await window.consoleAPI?.openDevTools?.(w.id); } catch (e) {} });
+    btnMore.addEventListener('click', () => {
+      try {
+        const old = document.querySelector('.app-menu-overlay');
+        if (old) old.remove();
+      } catch (e) {}
+      const overlay = document.createElement('div');
+      overlay.className = 'app-menu-overlay';
+      const menu = document.createElement('div');
+      menu.className = 'app-menu';
+      const items = [
+        { icon: 'ri-focus-2-line', text: '聚焦', action: async () => { await window.consoleAPI?.focusWindow?.(w.id); } },
+        { icon: 'ri-code-line', text: '开发者工具', action: async () => { await window.consoleAPI?.openDevTools?.(w.id); } },
+        { sep: true },
+        { icon: 'ri-refresh-line', text: '刷新', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'reload'); } },
+        { icon: 'ri-subtract-line', text: '最小化', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'minimize'); } },
+        { icon: 'ri-checkbox-blank-line', text: '最大化/还原', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'maximize'); } },
+        { icon: 'ri-window-2-line', text: '切换全屏', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'fullscreen'); } },
+        { icon: w.isVisible ? 'ri-eye-off-line' : 'ri-eye-line', text: w.isVisible ? '隐藏' : '显示', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, w.isVisible ? 'hide' : 'show'); } },
+        { sep: true },
+        { icon: 'ri-close-line', text: '关闭', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'close'); } }
+      ];
+      items.forEach(it => {
+        if (it.sep) { const s = document.createElement('div'); s.className = 'app-menu-sep'; menu.appendChild(s); return; }
+        const btn = document.createElement('div');
+        btn.className = 'app-menu-item';
+        btn.innerHTML = `<i class="${it.icon}"></i><span>${it.text}</span>`;
+        btn.addEventListener('click', async () => { try { await it.action(); } catch (e) {} try { overlay.remove(); } catch (e) {} });
+        menu.appendChild(btn);
+      });
+      overlay.appendChild(menu);
+      document.body.appendChild(overlay);
+      try {
+        const r = btnMore.getBoundingClientRect();
+        const vw = window.innerWidth || document.documentElement.clientWidth || 1024;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 768;
+        const mw = menu.offsetWidth || 220;
+        const mh = menu.offsetHeight || 240;
+        let left = r.right - mw;
+        let top = r.bottom + 6;
+        const pad = 8;
+        if (left < pad) left = pad;
+        if (left + mw > vw - pad) left = vw - mw - pad;
+        if (top + mh > vh - pad) top = r.top - mh - 6;
+        if (top < pad) top = pad;
+        menu.style.left = `${Math.round(left)}px`;
+        menu.style.top = `${Math.round(top)}px`;
+      } catch (e) { menu.style.right = '8px'; menu.style.top = '40px'; }
+      const close = (e) => {
+        const t = e.target;
+        if (!menu.contains(t)) { try { overlay.remove(); document.removeEventListener('mousedown', close); } catch (e) {} }
+      };
+      document.addEventListener('mousedown', close);
+    });
+    return card;
+  }
+
   async function refreshWindows() {
     try {
       const res = await window.consoleAPI?.listWindows?.();
@@ -400,102 +502,135 @@
       const items = Array.isArray(res.windows) ? res.windows : [];
       if (!items.length) { windowsList.innerHTML = `<div class="muted">当前没有窗口</div>`; return; }
       try { windowsList.style.display = 'block'; } catch (e) {}
+
+      const groups = new Map();
       items.forEach(w => {
-        const card = document.createElement('div');
-        card.className = 'panel';
-        const h = document.createElement('div');
-        h.className = 'plugins-header';
-        h.innerHTML = `
-          <div class="header-left">
-            <h2 style="margin:0;font-size:16px;">窗口 #${w.id} ${w.title || ''}</h2>
-            <p class="muted window-url" title="${w.url || ''}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.url || ''}</p>
+        let key;
+        if (w.pluginId) {
+          key = w.pluginId;
+        } else if (w.isSystemWindow) {
+          key = '__system__';
+        } else {
+          key = '__other__';
+        }
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(w);
+      });
+
+      const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+        if (a === '__system__') return -1;
+        if (b === '__system__') return 1;
+        if (a === '__other__') return 1;
+        if (b === '__other__') return -1;
+        return a.localeCompare(b);
+      });
+
+      sortedKeys.forEach(pluginId => {
+        const windows = groups.get(pluginId);
+        const isSystem = pluginId === '__system__';
+        const isOther = pluginId === '__other__';
+        const groupEl = document.createElement('div');
+        groupEl.className = 'window-group';
+
+        const isExpanded = state.windowGroupExpandState[pluginId] === true;
+        const totalMemory = windows.reduce((sum, w) => sum + (w.memoryBytes || 0), 0);
+        const totalMemoryText = formatMemory(totalMemory);
+
+        const header = document.createElement('div');
+        header.className = 'window-group-header';
+        header.innerHTML = `
+          <div class="window-group-toggle">
+            <i class="${isExpanded ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line'}"></i>
           </div>
-          <div class="header-right">
-            <button class="btn secondary" data-act="focus"><i class="ri-focus-2-line"></i> 聚焦</button>
-            <button class="btn" data-act="devtools"><i class="ri-code-line"></i> 打开开发者工具</button>
-            <button class="btn" data-act="more"><i class="ri-more-2-fill"></i> 更多</button>
+          <div class="window-group-icon">
+            <i class="${isSystem ? 'ri-apps-line' : isOther ? 'ri-question-line' : 'ri-puzzle-line'}"></i>
+          </div>
+          <div class="window-group-title">
+            <span class="group-name">${isSystem ? '系统/主程序' : isOther ? '其它窗口' : pluginId}</span>
+            <span class="group-count">${windows.length} 个窗口</span>
+          </div>
+          <div class="window-group-memory">
+            <i class="ri-cpu-line"></i>
+            <span>${totalMemoryText}</span>
           </div>
         `;
-        card.appendChild(h);
-        const meta = document.createElement('div');
-        meta.style.padding = '8px 0 12px';
-        const sizeText = w.bounds ? `${w.bounds.width}×${w.bounds.height}` : '—';
-        meta.innerHTML = `
-          <span class="pill small">可见 ${w.isVisible ? '是' : '否'}</span>
-          <span class="pill small" style="margin-left:8px;">聚焦 ${w.isFocused ? '是' : '否'}</span>
-          <span class="pill small" style="margin-left:8px;">最小化 ${w.isMinimized ? '是' : '否'}</span>
-          <span class="pill small" style="margin-left:8px;">最大化 ${w.isMaximized ? '是' : '否'}</span>
-          <span class="pill small" style="margin-left:8px;">全屏 ${w.isFullScreen ? '是' : '否'}</span>
-          <span class="pill small" style="margin-left:8px;">尺寸 ${sizeText}</span>
-          ${w.pluginId ? `<span class="pill small" style="margin-left:8px;">插件 ${w.pluginId}</span>` : ''}
-          ${w.webContentsId ? `<span class="pill small" style="margin-left:8px;">WC ${w.webContentsId}</span>` : ''}
-        `;
-        card.appendChild(meta);
-        const btnFocus = h.querySelector('button[data-act="focus"]');
-        const btnDev = h.querySelector('button[data-act="devtools"]');
-        const btnMore = h.querySelector('button[data-act="more"]');
-        btnFocus.addEventListener('click', async () => { try { await window.consoleAPI?.focusWindow?.(w.id); } catch (e) {} });
-        btnDev.addEventListener('click', async () => { try { await window.consoleAPI?.openDevTools?.(w.id); } catch (e) {} });
-        btnMore.addEventListener('click', () => {
-          try {
-            const old = document.querySelector('.app-menu-overlay');
-            if (old) old.remove();
-          } catch (e) {}
-          const overlay = document.createElement('div');
-          overlay.className = 'app-menu-overlay';
-          const menu = document.createElement('div');
-          menu.className = 'app-menu';
-          const items = [
-            { icon: 'ri-focus-2-line', text: '聚焦', action: async () => { await window.consoleAPI?.focusWindow?.(w.id); } },
-            { icon: 'ri-code-line', text: '开发者工具', action: async () => { await window.consoleAPI?.openDevTools?.(w.id); } },
-            { sep: true },
-            { icon: 'ri-refresh-line', text: '刷新', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'reload'); } },
-            { icon: 'ri-subtract-line', text: '最小化', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'minimize'); } },
-            { icon: 'ri-checkbox-blank-line', text: '最大化/还原', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'maximize'); } },
-            { icon: 'ri-window-2-line', text: '切换全屏', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'fullscreen'); } },
-            { icon: 'ri-eye-off-line', text: '隐藏', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'hide'); } },
-            { sep: true },
-            { icon: 'ri-close-line', text: '关闭', action: async () => { await window.consoleAPI?.controlWindow?.(w.id, 'close'); } }
-          ];
-          items.forEach(it => {
-            if (it.sep) { const s = document.createElement('div'); s.className = 'app-menu-sep'; menu.appendChild(s); return; }
-            const btn = document.createElement('div');
-            btn.className = 'app-menu-item';
-            btn.innerHTML = `<i class="${it.icon}"></i><span>${it.text}</span>`;
-            btn.addEventListener('click', async () => { try { await it.action(); } catch (e) {} try { overlay.remove(); } catch (e) {} });
-            menu.appendChild(btn);
-          });
-          overlay.appendChild(menu);
-          document.body.appendChild(overlay);
-          try {
-            const r = btnMore.getBoundingClientRect();
-            const vw = window.innerWidth || document.documentElement.clientWidth || 1024;
-            const vh = window.innerHeight || document.documentElement.clientHeight || 768;
-            const mw = menu.offsetWidth || 220;
-            const mh = menu.offsetHeight || 240;
-            let left = r.right - mw;
-            let top = r.bottom + 6;
-            const pad = 8;
-            if (left < pad) left = pad;
-            if (left + mw > vw - pad) left = vw - mw - pad;
-            if (top + mh > vh - pad) top = r.top - mh - 6;
-            if (top < pad) top = pad;
-            menu.style.left = `${Math.round(left)}px`;
-            menu.style.top = `${Math.round(top)}px`;
-          } catch (e) { menu.style.right = '8px'; menu.style.top = '40px'; }
-          const close = (e) => {
-            const t = e.target;
-            if (!menu.contains(t)) { try { overlay.remove(); document.removeEventListener('mousedown', close); } catch (e) {} }
-          };
-          document.addEventListener('mousedown', close);
+
+        const content = document.createElement('div');
+        content.className = 'window-group-content';
+        content.hidden = !isExpanded;
+        windows.forEach(w => {
+          content.appendChild(createWindowCard(w, true));
         });
-        windowsList.appendChild(card);
+
+        header.addEventListener('click', () => {
+          const isCollapsed = content.hidden;
+          content.hidden = !isCollapsed;
+          state.windowGroupExpandState[pluginId] = isCollapsed;
+          const icon = header.querySelector('.window-group-toggle i');
+          if (icon) icon.className = isCollapsed ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line';
+        });
+
+        groupEl.appendChild(header);
+        groupEl.appendChild(content);
+        windowsList.appendChild(groupEl);
       });
     } catch (e) {
       windowsList.innerHTML = `<div class="muted">异常：${e?.message || String(e)}</div>`;
     }
   }
   windowsRefresh?.addEventListener('click', refreshWindows);
+
+  const windowsExpandAll = document.getElementById('windows-expand-all');
+  const windowsCollapseAll = document.getElementById('windows-collapse-all');
+
+  windowsExpandAll?.addEventListener('click', () => {
+    const groups = windowsList.querySelectorAll('.window-group');
+    groups.forEach(group => {
+      const header = group.querySelector('.window-group-header');
+      const content = group.querySelector('.window-group-content');
+      if (header && content) {
+        content.hidden = false;
+        const icon = header.querySelector('.window-group-toggle i');
+        if (icon) icon.className = 'ri-arrow-down-s-line';
+        const pluginId = Object.keys(state.windowGroupExpandState).find(key => 
+          group.querySelector('.group-name')?.textContent.includes(key) || 
+          (key === '__system__' && group.querySelector('.group-name')?.textContent.includes('系统')) ||
+          (key === '__other__' && group.querySelector('.group-name')?.textContent.includes('其它'))
+        );
+      }
+    });
+    Object.keys(state.windowGroupExpandState).forEach(key => {
+      state.windowGroupExpandState[key] = true;
+    });
+    const allKeys = new Set(['__system__', '__other__']);
+    windowsList.querySelectorAll('.window-group').forEach(group => {
+      const nameEl = group.querySelector('.group-name');
+      if (nameEl) {
+        const name = nameEl.textContent;
+        if (!name.includes('系统') && !name.includes('其它')) {
+          allKeys.add(name.split(' ')[0]);
+        }
+      }
+    });
+    allKeys.forEach(key => { state.windowGroupExpandState[key] = true; });
+  });
+
+  windowsCollapseAll?.addEventListener('click', () => {
+    const groups = windowsList.querySelectorAll('.window-group');
+    groups.forEach(group => {
+      const header = group.querySelector('.window-group-header');
+      const content = group.querySelector('.window-group-content');
+      if (header && content) {
+        content.hidden = true;
+        const icon = header.querySelector('.window-group-toggle i');
+        if (icon) icon.className = 'ri-arrow-right-s-line';
+      }
+    });
+    Object.keys(state.windowGroupExpandState).forEach(key => {
+      state.windowGroupExpandState[key] = false;
+    });
+  });
+
   window.addEventListener('beforeunload', () => {
     try { if (metricsTimer) clearInterval(metricsTimer); } catch (e) {}
     try { if (windowsTimer) clearInterval(windowsTimer); } catch (e) {}

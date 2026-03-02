@@ -44,16 +44,32 @@ function listAutomationEvents(pluginId) {
 function callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain) {
   return new Promise(async (resolve) => {
     const canonId = Registry.canonicalizePluginId(targetPluginId);
-    try { console.info('plugin:call_function:start', { pluginId: canonId, fn: fnName, caller: callerPluginId || null }); } catch (e) {}
-    // 优先主进程注册的函数，无需窗口
+    const logMsg = `调用函数(${canonId}.${fnName})`;
+    if (callerPluginId) {
+      backendLog.logFromPlugin(callerPluginId, 'info', logMsg);
+    } else {
+      try { console.info(logMsg); } catch (e) {}
+    }
     const fnMap = Registry.functionRegistry.get(canonId);
     if (fnMap && fnMap.has(fnName)) {
       try {
         const result = await Promise.resolve(fnMap.get(fnName)(...(Array.isArray(args) ? args : [])));
-        try { console.info('plugin:call_function:done', { pluginId: canonId, fn: fnName, ok: true, caller: callerPluginId || null }); } catch (e) {}
+        if (result !== true) {
+          const doneMsg = `调用结果(${canonId}.${fnName}) {result: ${JSON.stringify(result)}}`;
+          if (callerPluginId) {
+            backendLog.logFromPlugin(callerPluginId, 'info', doneMsg);
+          } else {
+            try { console.info(doneMsg); } catch (e) {}
+          }
+        }
         return resolve({ ok: true, result });
       } catch (e) {
-        try { console.info('plugin:call_function:done', { pluginId: canonId, fn: fnName, ok: false, error: e?.message || String(e), caller: callerPluginId || null }); } catch (e) {}
+        const failMsg = `调用失败(${canonId}.${fnName}) {error: ${e?.message || String(e)}}`;
+        if (callerPluginId) {
+          backendLog.logFromPlugin(callerPluginId, 'info', failMsg);
+        } else {
+          try { console.info(failMsg); } catch (e) {}
+        }
         return resolve({ ok: false, error: e.message });
       }
     }
@@ -88,7 +104,14 @@ function callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain) {
     const onResult = (event, id, payload) => {
       if (id !== reqId) return;
       try { ipcMain.removeListener('plugin:invoke:result', onResult); } catch (e) {}
-      try { console.info('plugin:call_function:done', { pluginId: canonId, fn: fnName, ok: !!payload?.ok, caller: callerPluginId || null }); } catch (e) {}
+      if (payload?.result !== true) {
+        const doneMsg = `调用结果(${canonId}.${fnName}) {ok: ${!!payload?.ok}, result: ${JSON.stringify(payload?.result)}}`;
+        if (callerPluginId) {
+          backendLog.logFromPlugin(callerPluginId, 'info', doneMsg);
+        } else {
+          try { console.info(doneMsg); } catch (e) {}
+        }
+      }
       resolve(payload);
     };
     ipcMain.on('plugin:invoke:result', onResult);

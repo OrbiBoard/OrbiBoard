@@ -1,6 +1,7 @@
 {
   "id": "note-widget",
   "name": "便签",
+  "icon": "ri-sticky-note-line",
   "version": "1.0.0",
   "author": "OrbiBoard",
   "type": "component",

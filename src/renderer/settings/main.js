@@ -82,6 +82,7 @@ async function main() {
       for (const key of Object.keys(pages)) {
         pages[key].hidden = key !== page;
       }
+      document.querySelectorAll('.no-fade-in').forEach(el => el.classList.remove('no-fade-in'));
       if (page === 'npm') {
         window.renderInstalled?.();
       } else if (page === 'general') {
@@ -117,7 +118,6 @@ async function main() {
         pages[key].hidden = key !== page;
       }
 
-      // 重置 content 的 mask 类
       const content = document.getElementById('content');
       if (content) content.classList.remove('scroll-mask-top', 'scroll-mask-bottom', 'scroll-mask-both');
 

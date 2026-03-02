@@ -13,6 +13,49 @@ async function initDebugSettings() {
     const updateTestPanel = document.getElementById('debug-update-test');
     const logList = document.getElementById('backend-log-list');
 
+    const subpageMap = {
+      'run': runPanel,
+      'icons': iconsPanel,
+      'logs': logsPanel,
+      'update-test': updateTestPanel
+    };
+    const subpageOrder = ['run', 'icons', 'logs', 'update-test'];
+    let currentSubpage = 'run';
+
+    const getSubpageDirection = (fromKey, toKey) => {
+      const fromIndex = subpageOrder.indexOf(fromKey);
+      const toIndex = subpageOrder.indexOf(toKey);
+      if (toIndex < fromIndex) return 'left';
+      if (toIndex > fromIndex) return 'right';
+      return 'none';
+    };
+
+    const switchSubpageWithAnimation = (oldKey, newKey, direction) => {
+      const oldEl = subpageMap[oldKey];
+      const newEl = subpageMap[newKey];
+      if (!oldEl || !newEl) {
+        if (oldEl) oldEl.hidden = true;
+        if (newEl) newEl.hidden = false;
+        return;
+      }
+
+      oldEl.hidden = true;
+      newEl.hidden = false;
+
+      newEl.classList.remove('slide-in-left', 'slide-in-right');
+      newEl.classList.add('no-fade-in');
+
+      if (direction === 'left') {
+        newEl.classList.add('slide-in-left');
+      } else if (direction === 'right') {
+        newEl.classList.add('slide-in-right');
+      }
+
+      setTimeout(() => {
+        newEl.classList.remove('slide-in-left', 'slide-in-right');
+      }, 350);
+    };
+
     // 确保所有面板初始状态正确
     if (runPanel) runPanel.hidden = false;
     if (iconsPanel) iconsPanel.hidden = true;
@@ -21,14 +64,17 @@ async function initDebugSettings() {
 
     subItems.forEach((btn) => {
       btn.addEventListener('click', () => {
+        const sub = btn.dataset.sub;
+        if (sub === currentSubpage) return;
+
+        const direction = getSubpageDirection(currentSubpage, sub);
+        const oldSubpage = currentSubpage;
+
         subItems.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        const sub = btn.dataset.sub;
-        
-        if (runPanel) runPanel.hidden = sub !== 'run';
-        if (iconsPanel) iconsPanel.hidden = sub !== 'icons';
-        if (logsPanel) logsPanel.hidden = sub !== 'logs';
-        if (updateTestPanel) updateTestPanel.hidden = sub !== 'update-test';
+
+        switchSubpageWithAnimation(oldSubpage, sub, direction);
+        currentSubpage = sub;
         
         if (sub === 'logs') {
           // 初次进入日志页，拉取最近记录并订阅实时日志

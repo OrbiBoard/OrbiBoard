@@ -611,14 +611,41 @@ function renderPluginSubnav(plugins) {
 
   // 第二遍扫描：处理无点号的插件，如果它本身就是某个已有分类的主插件（或作为分类名存在），则归入该分类
   // 如果不存在对应分类，则暂不归入任何特定分类（将在 "全部" 中显示，或归入 "其它"）
-  // 根据需求：“如果不存在 XXX. 那么不显示XXX的分类”，意味着只有 validGroups 中的才显示 Tab
+  // 根据需求："如果不存在 XXX. 那么不显示XXX的分类"，意味着只有 validGroups 中的才显示 Tab
   
   const groups = ['全部', ...Array.from(validGroups).sort()];
+  const groupOrder = ['all', ...Array.from(validGroups).sort()];
   
   // 检查当前选中的分类是否有效
   if (currentPluginFilter !== 'all' && !validGroups.has(currentPluginFilter)) {
       currentPluginFilter = 'all';
   }
+
+  const getFilterDirection = (fromKey, toKey) => {
+    const fromIndex = groupOrder.indexOf(fromKey);
+    const toIndex = groupOrder.indexOf(toKey);
+    if (toIndex < fromIndex) return 'left';
+    if (toIndex > fromIndex) return 'right';
+    return 'none';
+  };
+
+  const animatePluginsContainer = (direction) => {
+    const container = document.getElementById('plugins');
+    if (!container || direction === 'none') return;
+
+    container.classList.remove('slide-in-left', 'slide-in-right');
+    container.classList.add('no-fade-in');
+
+    if (direction === 'left') {
+      container.classList.add('slide-in-left');
+    } else {
+      container.classList.add('slide-in-right');
+    }
+
+    setTimeout(() => {
+      container.classList.remove('slide-in-left', 'slide-in-right');
+    }, 350);
+  };
 
   container.innerHTML = '';
   groups.forEach(g => {
@@ -651,7 +678,12 @@ function renderPluginSubnav(plugins) {
     
     btn.addEventListener('click', async () => {
         if (currentPluginFilter === filterKey) return;
+        
+        const direction = getFilterDirection(currentPluginFilter, filterKey);
         currentPluginFilter = filterKey;
+        
+        animatePluginsContainer(direction);
+        
         const mode = (localStorage.getItem('pluginsViewMode') || 'card');
         await renderPluginsByMode(mode); 
     });

@@ -1,6 +1,7 @@
 {
   "id": "photo-widget",
   "name": "相框",
+  "icon": "ri-image-line",
   "version": "1.0.0",
   "type": "component",
   "entry": "index.html",

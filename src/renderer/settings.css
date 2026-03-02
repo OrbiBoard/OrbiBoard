@@ -24,12 +24,126 @@
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 section:not([hidden]) {
-  animation: fadeInUp 0.3s ease-out;
+  animation: none;
+}
+
+section:not([hidden]) > header {
+  animation: none;
+}
+
+section:not([hidden]) > .panel {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+section:not([hidden]) > .plugins {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+section:not([hidden]) > .subnav {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+section:not([hidden]) > .automation {
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel.no-fade-in:not(.slide-in-left):not(.slide-in-right) {
+  animation: none !important;
+}
+
+.plugins.no-fade-in:not(.slide-in-left):not(.slide-in-right) {
+  animation: none !important;
+}
+
+#store-grid.no-fade-in:not(.slide-in-left):not(.slide-in-right) {
+  animation: none !important;
+}
+
+#page-general {
+  position: relative;
+}
+
+#page-general > .subnav {
+  position: relative;
+  z-index: 5;
+}
+
+#page-general > .panel[id^="general-"] {
+  position: relative;
+  overflow-y: visible;
+}
+
+#page-debug {
+  position: relative;
+}
+
+#page-debug > .subnav {
+  position: relative;
+  z-index: 5;
+}
+
+#page-debug > .panel[id^="debug-"] {
+  position: relative;
+  overflow-y: visible;
+}
+
+#page-market {
+  position: relative;
+}
+
+#page-market #store-grid {
+  position: relative;
+}
+
+.panel.slide-in-left {
+  animation: slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.panel.slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.panel.no-fade-in:not(.slide-in-left):not(.slide-in-right) {
+  animation: none !important;
+}
+
+#store-grid.slide-in-left {
+  animation: slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#store-grid.slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#store-grid.no-fade-in {
+  animation: none !important;
+}
+
+#plugins.slide-in-left {
+  animation: slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#plugins.slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#plugins.no-fade-in:not(.slide-in-left):not(.slide-in-right) {
+  animation: none !important;
 }
 
 /* Loading Overlay for Market */
@@ -629,6 +743,9 @@ header {
 }
 
 /* 插件页标题区域：左文案 + 右视图切换器 */
+#page-plugins {
+  overflow: hidden;
+}
 #page-plugins > .plugins-header {
   display: grid;
   grid-template-columns: 1fr auto;

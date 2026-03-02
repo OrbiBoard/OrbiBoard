@@ -10,19 +10,61 @@ async function initGeneralSettings() {
     time: document.getElementById('general-time'),
     data: document.getElementById('general-data')
   };
+  const subpageOrder = ['basic', 'appearance', 'splash', 'time', 'data'];
+  let currentSubpage = 'basic';
+
+  const getSubpageDirection = (fromKey, toKey) => {
+    const fromIndex = subpageOrder.indexOf(fromKey);
+    const toIndex = subpageOrder.indexOf(toKey);
+    if (toIndex < fromIndex) return 'left';
+    if (toIndex > fromIndex) return 'right';
+    return 'none';
+  };
+
+  const switchSubpageWithAnimation = (oldKey, newKey, direction) => {
+    const oldEl = subpages[oldKey];
+    const newEl = subpages[newKey];
+    if (!oldEl || !newEl) {
+      if (oldEl) oldEl.hidden = true;
+      if (newEl) newEl.hidden = false;
+      return;
+    }
+
+    oldEl.hidden = true;
+    newEl.hidden = false;
+
+    newEl.classList.remove('slide-in-left', 'slide-in-right');
+    newEl.classList.add('no-fade-in');
+
+    if (direction === 'left') {
+      newEl.classList.add('slide-in-left');
+    } else if (direction === 'right') {
+      newEl.classList.add('slide-in-right');
+    }
+
+    setTimeout(() => {
+      newEl.classList.remove('slide-in-left', 'slide-in-right');
+    }, 350);
+  };
+
   subItems.forEach((btn) => {
     if (btn.dataset.bound === '1') return;
     btn.dataset.bound = '1';
     btn.addEventListener('click', () => {
+      const page = btn.dataset.sub;
+      if (page === currentSubpage) return;
+
+      const direction = getSubpageDirection(currentSubpage, page);
+      const oldPage = currentSubpage;
+
       subItems.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      const page = btn.dataset.sub;
-      for (const key of Object.keys(subpages)) {
-        subpages[key].hidden = key !== page;
-      }
+
+      switchSubpageWithAnimation(oldPage, page, direction);
+      currentSubpage = page;
     });
   });
-  // 默认显示“基础”子页
+  // 默认显示"基础"子页
   for (const key of Object.keys(subpages)) subpages[key].hidden = key !== 'basic';
   subItems.forEach((b) => b.classList.toggle('active', b.dataset.sub === 'basic'));
 

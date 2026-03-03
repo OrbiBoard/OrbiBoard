@@ -22,15 +22,18 @@
       justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
+
     #loading-mask.hidden {
       opacity: 0;
       visibility: hidden;
     }
+
     .loading-logo {
       width: 80px;
       height: 80px;
       margin-bottom: 16px;
     }
+
     .loading-title {
       font-size: 24px;
       font-weight: 600;
@@ -68,7 +71,8 @@
         <button class="nav-item" data-page="components"><i class="ri-layout-3-line"></i> 组件管理</button>
         <button class="nav-item" data-page="general"><i class="ri-settings-3-line"></i> 通用设置</button>
         <button class="nav-item" data-page="config"><i class="ri-settings-2-line"></i> 配置总览</button>
-        <button class="nav-item" data-page="defaults" style="display: none;"><i class="ri-flag-2-line"></i> 默认行为</button>
+        <button class="nav-item" data-page="defaults" style="display: none;"><i class="ri-flag-2-line"></i>
+          默认行为</button>
         <button class="nav-item" data-page="automation"><i class="ri-timer-line"></i> 自动执行</button>
         <button class="nav-item" data-page="npm"><i class="ri-box-3-line"></i> 依赖管理</button>
         <button class="nav-item" data-page="debug" style="display: none;"><i class="ri-tools-line"></i> 调试功能</button>
@@ -80,10 +84,14 @@
         <div class="drag"></div>
         <div class="window-actions">
           <div class="title-info" style="display:flex;align-items:center;gap:8px;margin-right:auto;padding-right:8px;">
-            <span class="pill small" id="title-version-pill" style="cursor:pointer;margin-top: 0;">版本 <span id="title-version">—</span></span>
-            <a id="title-alpha-pill" href="https://qm.qq.com/q/5JMVaQ0PZe" target="_blank" rel="noopener noreferrer" class="pill small" style="background:#f59e0b;color:#ffffff;cursor:pointer;text-decoration:none;margin-top:0;">Alpha</a>
+            <span class="pill small" id="title-version-pill" style="cursor:pointer;margin-top: 0;">版本 <span
+                id="title-version">—</span></span>
+            <a id="title-alpha-pill" href="https://qm.qq.com/q/5JMVaQ0PZe" target="_blank" rel="noopener noreferrer"
+              class="pill small"
+              style="background:#f59e0b;color:#ffffff;cursor:pointer;text-decoration:none;margin-top:0;">Alpha</a>
           </div>
-          <button class="win-btn" data-act="menu" title="更多"><i style="font-size: 18px;" class="ri-more-2-fill"></i></button>
+          <button class="win-btn" data-act="menu" title="更多"><i style="font-size: 18px;"
+              class="ri-more-2-fill"></i></button>
           <button class="win-btn" data-act="minimize" title="最小化"><i style="font-size: 18px;"
               class="ri-subtract-line"></i></button>
           <button class="win-btn max" data-act="maximize" title="最大化"><i class="ri-checkbox-blank-line"></i></button>
@@ -94,7 +102,12 @@
       <div class="alpha-banner">
         <i class="ri-alert-line"></i>
         <span>Alpha测试版本可能存在问题，不建议在生产环境使用。反馈BUG请点击右上角标签。</span>
-        <button id="close-alpha-banner" class="icon-btn" style="margin-left: auto; width: 20px; height: 20px;"><i class="ri-close-line" style="font-size: 16px;"></i></button>
+        <button id="close-alpha-banner" class="icon-btn" style="margin-left: auto; width: 20px; height: 20px;"><i
+            class="ri-close-line" style="font-size: 16px;"></i></button>
+      </div>
+      <div class="alpha-banner" style="display: flex!important;">
+        <i class="ri-warning-line"></i>
+        <span>大多数插件仍然处于开发状态，请及时更新插件以获取功能更完整，更稳定的插件！</span>
       </div>
       <main id="content">
         <section id="page-plugins">
@@ -208,11 +221,12 @@
                   <div class="setting-desc">自定义应用的主色调。</div>
                 </div>
                 <div class="setting-action">
-                   <div class="inline">
+                  <div class="inline">
                     <!-- 自定义取色器 UI -->
                     <div id="theme-color-picker" class="color-picker-ui"></div>
                     <!-- 隐藏的原生取色器，由 UI 触发 -->
-                    <input id="theme-color-custom" type="color" style="visibility:hidden; position:absolute; width:0; height:0;" />
+                    <input id="theme-color-custom" type="color"
+                      style="visibility:hidden; position:absolute; width:0; height:0;" />
                   </div>
                 </div>
               </div>
@@ -794,7 +808,7 @@
                   <div class="setting-desc">测试主程序与插件更新后的通知样式与逻辑。</div>
                 </div>
               </div>
-              
+
               <div class="setting-item">
                 <div class="setting-icon"><i class="ri-notification-badge-line"></i></div>
                 <div class="setting-main">
@@ -826,9 +840,11 @@
         <!-- 关于页面 -->
         <section id="page-about" hidden>
           <!-- 渐变色卡片：仅包含软件名称和 Logo -->
-          <div class="panel" style="background: linear-gradient(135deg, #10b981, #047857); border: none; padding: 40px 20px;">
+          <div class="panel"
+            style="background: linear-gradient(135deg, #10b981, #047857); border: none; padding: 40px 20px;">
             <div class="about-hero" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
-              <img class="about-logo" src="../../icon.ico" alt="OrbiBoard" style="width: 96px; height: 96px; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" />
+              <img class="about-logo" src="../../icon.ico" alt="OrbiBoard"
+                style="width: 96px; height: 96px; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" />
               <div class="about-title" style="text-align: center;">
                 <div class="name" style="color: #fff; font-size: 28px;">OrbiBoard</div>
                 <div class="tagline" style="color: rgba(255,255,255,0.9);">插件化大屏课堂辅助工具</div>
@@ -842,18 +858,21 @@
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="display: flex; flex-direction: column;">
-                  <div style="font-weight: 600; font-size: 16px;">OrbiBoard v<span id="about-version">—</span> | NullSign</div>
+                  <div style="font-weight: 600; font-size: 16px;">OrbiBoard v<span id="about-version">—</span> |
+                    NullSign</div>
                   <div id="update-status" class="muted" style="font-size: 13px;">当前已是最新版本</div>
                 </div>
               </div>
               <div style="display: flex; gap: 8px;">
-                <button id="about-toggle-details" class="btn secondary"><i class="ri-information-line"></i> 详细信息</button>
+                <button id="about-toggle-details" class="btn secondary"><i class="ri-information-line"></i>
+                  详细信息</button>
                 <button id="about-check-update" class="btn primary"><i class="ri-refresh-line"></i> 检查更新</button>
               </div>
             </div>
-            
+
             <!-- 详细信息区域（默认隐藏） -->
-            <div id="about-details-area" hidden style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 16px;">
+            <div id="about-details-area" hidden
+              style="margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 16px;">
               <div class="about-badges" style="justify-content: flex-start; margin-bottom: 12px;">
                 <span class="pill small">Electron <span id="about-electron">—</span></span>
                 <span class="pill small">Node <span id="about-node">—</span></span>
@@ -866,25 +885,31 @@
                 <button id="about-open-data" class="btn secondary"><i class="ri-folder-2-line"></i> 打开数据目录</button>
               </div>
             </div>
-              
+
             <!-- 更新详情 -->
-            <div id="update-details" class="update-details" hidden style="margin-top: 16px; background: var(--bg-secondary); border-radius: 8px; padding: 12px;">
+            <div id="update-details" class="update-details" hidden
+              style="margin-top: 16px; background: var(--bg-secondary); border-radius: 8px; padding: 12px;">
               <div class="inline" style="margin-bottom: 8px;">
                 <span class="pill primary">新版本 v<span id="update-new-version"></span></span>
                 <span class="muted" id="update-size"></span>
               </div>
-              <div id="update-notes" style="font-size: 13px; line-height: 1.5; color: var(--fg-secondary); max-height: 150px; overflow-y: auto;"></div>
+              <div id="update-notes"
+                style="font-size: 13px; line-height: 1.5; color: var(--fg-secondary); max-height: 150px; overflow-y: auto;">
+              </div>
               <div style="margin-top: 12px; display: flex; gap: 8px;">
-                <button id="about-perform-update" class="btn primary"><i class="ri-download-cloud-2-line"></i> 立即更新</button>
+                <button id="about-perform-update" class="btn primary"><i class="ri-download-cloud-2-line"></i>
+                  立即更新</button>
                 <div id="update-progress-wrap" style="flex: 1; display: none; align-items: center; gap: 8px;">
-                  <div class="progress-bar" style="flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
-                    <div id="update-progress-bar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                  <div class="progress-bar"
+                    style="flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                    <div id="update-progress-bar"
+                      style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
                   </div>
                   <span id="update-progress-text" class="muted" style="font-size: 12px;">0%</span>
                 </div>
               </div>
             </div>
-            
+
             <div id="update-info" class="muted" style="font-size: 12px; margin-top: 8px;">最后检查时间：从未</div>
           </div>
           <div class="panel">
@@ -892,17 +917,20 @@
               <div class="section-title"><i class="ri-team-line"></i> 贡献者</div>
               <ul class="contributors-list horizontal">
                 <li>
-                  <div class="avatar"><img src="./avatars/PYLXU.jpg" alt="PYLXU" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
+                  <div class="avatar"><img src="./avatars/PYLXU.jpg" alt="PYLXU"
+                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
                   <div class="name">PYLXU</div>
                   <div class="role">主程序开发</div>
                 </li>
                 <li>
-                  <div class="avatar"><img src="./avatars/FYCG.jpg" alt="风吟残歌" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
+                  <div class="avatar"><img src="./avatars/FYCG.jpg" alt="风吟残歌"
+                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
                   <div class="name">风吟残歌</div>
                   <div class="role">主程序开发</div>
                 </li>
                 <li>
-                  <div class="avatar"><img src="./avatars/XZEE.jpg" alt="小震" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
+                  <div class="avatar"><img src="./avatars/XZEE.jpg" alt="小震"
+                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>
                   <div class="name">小震</div>
                   <div class="role">LOGO设计</div>
                 </li>
@@ -975,4 +1003,5 @@
   <script src="./settings/handler/config.js"></script>
   <script src="./settings/main.js"></script>
 </body>
+
 </html>

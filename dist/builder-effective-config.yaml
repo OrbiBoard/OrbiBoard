@@ -7,7 +7,6 @@ asarUnpack:
 files:
   - filter:
       - '**/*'
-      - '!dev-plugins/**'
 appId: com.orbiboard
 productName: OrbiBoard
 icon: logo.png
@@ -36,4 +35,4 @@ nsis:
   runAfterFinish: true
   deleteAppDataOnUninstall: false
   include: build/installer.nsh
-electronVersion: 38.7.2
+electronVersion: 38.8.2

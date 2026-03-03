@@ -1,7 +1,7 @@
 {
   "name": "orbiboard",
-  "version": "1.0.1",
-  "main": "src/main/main.js",
+  "version": "1.0.0",
+  "main": "src/main/Main.js",
   "scripts": {
     "start": "electron .",
     "run": "electron .",

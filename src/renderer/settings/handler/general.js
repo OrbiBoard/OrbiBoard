@@ -65,8 +65,8 @@ async function initGeneralSettings() {
     });
   });
   // 默认显示"基础"子页
-  for (const key of Object.keys(subpages)) subpages[key].hidden = key !== 'basic';
-  subItems.forEach((b) => b.classList.toggle('active', b.dataset.sub === 'basic'));
+  // for (const key of Object.keys(subpages)) subpages[key].hidden = key !== 'basic';
+  // subItems.forEach((b) => b.classList.toggle('active', b.dataset.sub === 'basic'));
 
   const defaults = {
     themeMode: 'system',

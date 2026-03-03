@@ -113,7 +113,7 @@
             </div>
           </header>
           <div id="plugins-subnav" class="subnav" style="margin-bottom: 16px;"></div>
-          <div id="plugins" class="plugins"></div>
+          <div id="plugins" class="plugins tab-content"></div>
         </section>
         <section id="page-components" hidden>
           <header>
@@ -154,7 +154,7 @@
             </div>
             <div class="store-right">
               <div id="store-filters" class="auto-filters" hidden></div>
-              <div id="store-grid" class="plugins"></div>
+              <div id="store-grid" class="plugins tab-content"></div>
               <div id="store-empty" class="muted" style="padding:12px;" hidden>暂无内容</div>
               <div id="store-details" class="panel" hidden></div>
             </div>
@@ -179,7 +179,7 @@
           </div>
 
           <!-- 外观与主题 子页 -->
-          <div id="general-appearance" class="panel" hidden>
+          <div id="general-appearance" class="panel tab-content" hidden>
             <div class="form">
               <!-- 主题模式 -->
               <div class="setting-item">
@@ -201,7 +201,7 @@
               </div>
 
               <!-- 主题色 -->
-              <div class="setting-item">
+              <div class="setting-item tab-content">
                 <div class="setting-icon"><i class="ri-palette-line"></i></div>
                 <div class="setting-main">
                   <div class="setting-title">主题强调色</div>
@@ -220,7 +220,7 @@
           </div>
 
           <!-- 启动页与名言设置（合并） -->
-          <div id="general-splash" class="panel" hidden>
+          <div id="general-splash" class="panel tab-content" hidden>
             <div class="form">
               <!-- 启动页外观与文案（合并卡片：左预览/右设置） -->
               <div class="setting-card splash-card">
@@ -340,7 +340,7 @@
           </div>
 
           <!-- 基础设置子页（仅保留启动相关） -->
-          <div id="general-basic" class="panel">
+          <div id="general-basic" class="panel tab-content">
             <div class="form">
               <!-- 自动更新开关 -->
               <div class="setting-item">
@@ -435,7 +435,7 @@
           </div>
 
           <!-- 时间与数据 子页 -->
-          <div id="general-time" class="panel" hidden>
+          <div id="general-time" class="panel tab-content" hidden>
             <div class="form">
               <!-- 当前设定时间与日期（实时展示，左大时间 / 右学期信息） -->
               <div class="setting-item full">
@@ -546,7 +546,7 @@
           </div>
 
           <!-- 数据目录 子页（从插件页面移回通用设置） -->
-          <div id="general-data" class="panel" hidden>
+          <div id="general-data" class="panel tab-content" hidden>
             <div class="form">
               <!-- 数据目录占用大小展示 -->
               <div class="setting-item">
@@ -693,7 +693,7 @@
             <button class="sub-item" data-sub="update-test"><i class="ri-notification-badge-line"></i> 更新测试</button>
           </div>
           <!-- 运行管理子页（默认） -->
-          <div id="debug-run" class="panel">
+          <div id="debug-run" class="panel tab-content">
             <div class="form">
               <div class="setting-item">
                 <div class="setting-icon"><i class="ri-information-line"></i></div>
@@ -796,6 +796,7 @@
               </div>
               
               <div class="setting-item">
+                <div class="setting-icon"><i class="ri-notification-badge-line"></i></div>
                 <div class="setting-main">
                   <div class="setting-title">UI 样式预览</div>
                   <div class="setting-desc">直接触发前端通知组件，不修改系统状态。</div>
@@ -807,6 +808,7 @@
               </div>
 
               <div class="setting-item">
+                <div class="setting-icon"><i class="ri-notification-badge-line"></i></div>
                 <div class="setting-main">
                   <div class="setting-title">启动行为模拟</div>
                   <div class="setting-desc">修改配置标记，使下次启动时触发真实的更新检测逻辑。</div>
@@ -840,7 +842,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="display: flex; flex-direction: column;">
-                  <div style="font-weight: 600; font-size: 16px;">OrbiBoard v<span id="about-version">—</span></div>
+                  <div style="font-weight: 600; font-size: 16px;">OrbiBoard v<span id="about-version">—</span> | NullSign</div>
                   <div id="update-status" class="muted" style="font-size: 13px;">当前已是最新版本</div>
                 </div>
               </div>

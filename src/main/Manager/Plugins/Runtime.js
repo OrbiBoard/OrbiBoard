@@ -54,21 +54,21 @@ function callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain) {
     if (fnMap && fnMap.has(fnName)) {
       try {
         const result = await Promise.resolve(fnMap.get(fnName)(...(Array.isArray(args) ? args : [])));
-        if (result !== true) {
-          const doneMsg = `调用结果(${canonId}.${fnName}) {result: ${JSON.stringify(result)}}`;
+        if (result && typeof result === 'object' && result.ok === false) {
+          const failMsg = `调用失败(${canonId}.${fnName}) ${JSON.stringify(result)}`;
           if (callerPluginId) {
-            backendLog.logFromPlugin(callerPluginId, 'info', doneMsg);
+            backendLog.logFromPlugin(callerPluginId, 'warn', failMsg);
           } else {
-            try { console.info(doneMsg); } catch (e) {}
+            try { console.warn(failMsg); } catch (e) {}
           }
         }
         return resolve({ ok: true, result });
       } catch (e) {
         const failMsg = `调用失败(${canonId}.${fnName}) {error: ${e?.message || String(e)}}`;
         if (callerPluginId) {
-          backendLog.logFromPlugin(callerPluginId, 'info', failMsg);
+          backendLog.logFromPlugin(callerPluginId, 'warn', failMsg);
         } else {
-          try { console.info(failMsg); } catch (e) {}
+          try { console.warn(failMsg); } catch (e) {}
         }
         return resolve({ ok: false, error: e.message });
       }
@@ -104,12 +104,12 @@ function callFunction(targetPluginId, fnName, args, callerPluginId, ipcMain) {
     const onResult = (event, id, payload) => {
       if (id !== reqId) return;
       try { ipcMain.removeListener('plugin:invoke:result', onResult); } catch (e) {}
-      if (payload?.result !== true) {
-        const doneMsg = `调用结果(${canonId}.${fnName}) {ok: ${!!payload?.ok}, result: ${JSON.stringify(payload?.result)}}`;
+      if (payload && typeof payload === 'object' && payload.ok === false) {
+        const failMsg = `调用失败(${canonId}.${fnName}) ${JSON.stringify(payload)}`;
         if (callerPluginId) {
-          backendLog.logFromPlugin(callerPluginId, 'info', doneMsg);
+          backendLog.logFromPlugin(callerPluginId, 'warn', failMsg);
         } else {
-          try { console.info(doneMsg); } catch (e) {}
+          try { console.warn(failMsg); } catch (e) {}
         }
       }
       resolve(payload);

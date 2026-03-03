@@ -144,56 +144,112 @@
         }
         return true;
       });
-      entries.forEach((e, i) => {
-        const row = document.createElement('div');
-        row.className = 'log-row';
-        const color = levelColor(e.level);
-        const badge = document.createElement('span');
-        badge.textContent = String(e.level).toUpperCase();
-        badge.style.display = 'inline-block';
-        badge.style.padding = '0 6px';
-        badge.style.marginRight = '8px';
-        badge.style.borderRadius = '4px';
-        badge.style.background = color;
-        badge.style.color = '#fff';
-        const src = document.createElement('span');
-        src.textContent = `[${formatSource(e)}]`;
-        src.style.marginRight = '8px';
-        src.style.color = '#93C5FD';
-        const ts = document.createElement('span');
-        ts.textContent = new Date(e.ts || Date.now()).toLocaleString();
-        ts.style.marginRight = '8px';
-        ts.style.color = '#A3A3A3';
-        const msg = document.createElement('span');
-        msg.textContent = e.text || '';
-        row.appendChild(badge);
-        row.appendChild(ts);
-        row.appendChild(src);
-        row.appendChild(msg);
-        const idx = state.entries.indexOf(e);
-        row.dataset.index = String(idx);
-        if (state.selected.has(idx)) row.classList.add('selected');
-        row.addEventListener('click', (ev) => {
-          const cur = idx;
-          if (ev.shiftKey && state.lastSelectedIndex != null) {
-            const [a, b] = [state.lastSelectedIndex, cur].sort((x, y) => x - y);
-            for (let k = a; k <= b; k++) state.selected.add(k);
-          } else {
-            if (state.selected.has(cur)) state.selected.delete(cur);
-            else state.selected.add(cur);
-            state.lastSelectedIndex = cur;
+
+      function entryKey(e) {
+        return `${e.level}:${e.sourceId}:${e.text}`;
+      }
+
+      function findPatternLength(arr, startIdx) {
+        const maxPatternLen = 3;
+        for (let patternLen = maxPatternLen; patternLen >= 1; patternLen--) {
+          if (startIdx + patternLen > arr.length) continue;
+          let repeatCount = 1;
+          let i = startIdx + patternLen;
+          while (i + patternLen <= arr.length) {
+            let match = true;
+            for (let j = 0; j < patternLen; j++) {
+              if (entryKey(arr[startIdx + j]) !== entryKey(arr[i + j])) {
+                match = false;
+                break;
+              }
+            }
+            if (match) {
+              repeatCount++;
+              i += patternLen;
+            } else {
+              break;
+            }
           }
-          renderList({ autoScroll: false });
-          renderSelectionTools();
+          if (repeatCount >= 2) {
+            return { patternLen, repeatCount };
+          }
+        }
+        return { patternLen: 1, repeatCount: 1 };
+      }
+
+      const grouped = [];
+      let i = 0;
+      while (i < entries.length) {
+        const { patternLen, repeatCount } = findPatternLength(entries, i);
+        const pattern = entries.slice(i, i + patternLen);
+        grouped.push({ pattern, repeatCount });
+        i += patternLen * repeatCount;
+      }
+
+      grouped.forEach((g) => {
+        const { pattern, repeatCount } = g;
+        pattern.forEach((e, pi) => {
+          const row = document.createElement('div');
+          row.className = 'log-row';
+          const color = levelColor(e.level);
+          const badge = document.createElement('span');
+          badge.textContent = String(e.level).toUpperCase();
+          badge.style.display = 'inline-block';
+          badge.style.padding = '0 6px';
+          badge.style.marginRight = '8px';
+          badge.style.borderRadius = '4px';
+          badge.style.background = color;
+          badge.style.color = '#fff';
+          const src = document.createElement('span');
+          src.textContent = `[${formatSource(e)}]`;
+          src.style.marginRight = '8px';
+          src.style.color = '#93C5FD';
+          const ts = document.createElement('span');
+          ts.textContent = new Date(e.ts || Date.now()).toLocaleString();
+          ts.style.marginRight = '8px';
+          ts.style.color = '#A3A3A3';
+          const msg = document.createElement('span');
+          msg.textContent = e.text || '';
+          row.appendChild(badge);
+          row.appendChild(ts);
+          row.appendChild(src);
+          row.appendChild(msg);
+          if (repeatCount > 1 && pi === pattern.length - 1) {
+            const countBadge = document.createElement('span');
+            countBadge.textContent = `×${repeatCount}`;
+            countBadge.style.marginLeft = '8px';
+            countBadge.style.padding = '1px 6px';
+            countBadge.style.borderRadius = '10px';
+            countBadge.style.background = 'rgba(251, 191, 36, 0.2)';
+            countBadge.style.color = '#fbbf24';
+            countBadge.style.fontSize = '11px';
+            countBadge.style.fontWeight = '600';
+            row.appendChild(countBadge);
+          }
+          const idx = state.entries.indexOf(e);
+          row.dataset.index = String(idx);
+          if (state.selected.has(idx)) row.classList.add('selected');
+          row.addEventListener('click', (ev) => {
+            const cur = idx;
+            if (ev.shiftKey && state.lastSelectedIndex != null) {
+              const [a, b] = [state.lastSelectedIndex, cur].sort((x, y) => x - y);
+              for (let k = a; k <= b; k++) state.selected.add(k);
+            } else {
+              if (state.selected.has(cur)) state.selected.delete(cur);
+              else state.selected.add(cur);
+              state.lastSelectedIndex = cur;
+            }
+            renderList({ autoScroll: false });
+            renderSelectionTools();
+          });
+          logList.appendChild(row);
         });
-        logList.appendChild(row);
       });
+
       const shouldScroll = opts.autoScroll === true || (opts.autoScroll === undefined && wasNearBottom);
       if (shouldScroll) {
         logList.scrollTop = logList.scrollHeight;
       } else {
-        // preserve approximate position by anchoring around the lastSelectedIndex if possible
-        // otherwise restore previous scrollTop (best effort)
         try { logList.scrollTop = prevScrollTop; } catch (e) {}
       }
     } catch (e) {}

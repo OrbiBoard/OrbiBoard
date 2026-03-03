@@ -45,7 +45,7 @@ async function initMarketPage() {
         const catlog = await fetchMarket('/api/market/catalog');
         market.categories = cats || {};
         market.catalog = catlog || { plugins: [], automation: [], components: [] };
-      } catch (e) {}
+      } catch (e) { }
       // 若接口不可用则显示空列表（不回退本地假数据）
       market.categories.plugins = Array.isArray(market?.categories?.plugins) ? market.categories.plugins : [];
       market.categories.automation = Array.isArray(market?.categories?.automation) ? market.categories.automation : [];
@@ -56,10 +56,11 @@ async function initMarketPage() {
       try {
         window.__marketCatalog__ = market.catalog.plugins.slice();
         window.__marketCatalogUpdatedAt__ = Date.now();
-      } catch (e) {}
+      } catch (e) { }
     };
     // 首次加载数据
     await reloadMarket();
+    // console.log('market', market);
     const iconForSub = (tab, id) => {
       if (tab === 'plugins') return { all: 'ri-apps-2-line', hot: 'ri-fire-line', assist: 'ri-book-read-line', notify: 'ri-notification-2-line', tools: 'ri-tools-line', system: 'ri-settings-3-line', other: 'ri-more-line' }[id] || 'ri-apps-2-line';
       if (tab === 'automation') return { all: 'ri-apps-2-line', class: 'ri-school-line', notify: 'ri-notification-2-line', tools: 'ri-tools-line' }[id] || 'ri-apps-2-line';
@@ -197,22 +198,22 @@ async function initMarketPage() {
         for (const p of pluginList.slice()) {
           if (renderToken !== myToken) return; // 并发保护
           let foundUpdate = false;
-          
+
           // 1. 优先检查市场目录（支持 ZIP 与 NPM）
           // 优先匹配 ID，其次 Name
           const marketItem = market.catalog.plugins.find(m => m.id === p.id || m.name === p.name);
           if (marketItem && marketItem.version && compareVersions(marketItem.version, p.version) > 0) {
-             updates.push({
-               ...p,
-               latest: marketItem.version,
-               zip: marketItem.zip,
-               npm: marketItem.npm, // 市场条目可能同时包含 npm
-               description: marketItem.description || p.description,
-               icon: marketItem.icon || p.icon
-             });
-             foundUpdate = true;
+            updates.push({
+              ...p,
+              latest: marketItem.version,
+              zip: marketItem.zip,
+              npm: marketItem.npm, // 市场条目可能同时包含 npm
+              description: marketItem.description || p.description,
+              icon: marketItem.icon || p.icon
+            });
+            foundUpdate = true;
           }
-          
+
           if (foundUpdate) continue;
 
           // 2. 检查 NPM（仅当本地插件声明 npm 且未在市场找到更新时）
@@ -222,7 +223,7 @@ async function initMarketPage() {
             const versions = (res?.ok && Array.isArray(res.versions)) ? res.versions : [];
             const latest = versions.length ? versions[versions.length - 1] : null;
             if (latest && latest !== p.version) updates.push({ ...p, latest });
-          } catch (e) {}
+          } catch (e) { }
         }
         items = updates;
       } else {
@@ -281,15 +282,17 @@ async function initMarketPage() {
       refreshBtn.addEventListener('click', async () => {
         try {
           refreshBtn.disabled = true; refreshBtn.innerHTML = '<i class="ri-loader-4-line"></i> 刷新中...';
-          if (loadingEl) loadingEl.hidden = false;
+          // if (loadingEl) loadingEl.hidden = false;
           await reloadMarket();
           buildSubnav(currentTab);
           await renderGrid();
         } finally {
           refreshBtn.disabled = false; refreshBtn.innerHTML = '<i class="ri-refresh-line"></i> 刷新';
-          if (loadingEl) loadingEl.hidden = true;
+          // if (loadingEl) loadingEl.hidden = true;
         }
       });
     }
-  } catch (e) {}
+    buildSubnav(currentTab);
+    await renderGrid();
+  } catch (e) { }
 }

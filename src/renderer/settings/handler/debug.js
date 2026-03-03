@@ -237,29 +237,6 @@ async function initDebugSettings() {
     // 更新测试逻辑
     const testMainUpdateBtn = document.getElementById('debug-test-main-update');
     testMainUpdateBtn?.addEventListener('click', () => {
-      // 以前是前端模拟，现在改为请求后端显示真实通知窗口
-      // 但为了方便测试，我们也可以直接调用 window.settingsAPI.testNotification? 
-      // 或者我们暂时保留前端模拟（但只是模拟UI），或者我们添加一个 IPC 让后端弹窗。
-      // 既然现在是独立窗口，前端直接模拟已经不一样了。
-      // 最好是添加一个 debug IPC。
-      
-      // 这里我们使用一个简单的 fetch 或者 invoke 来触发后端测试（如果后端支持）
-      // 由于没有专门的 debug IPC，我们可以通过 consoleIpc 或者临时添加。
-      // 或者，为了简单演示，我们还是保留“前端模拟”，但提示用户这是旧版模拟。
-      // 不，用户要求“测试该功能的组件”，所以应该是测试新窗口。
-      // 让我们修改 NotificationIpc.js 增加一个 test 接口，或者复用。
-      
-      // 鉴于不能随意修改 IPC 接口定义（需要重启后端），我们这里先用前端模拟，
-      // 但其实用户更想看的是右下角弹窗。
-      // 我们可以尝试通过 backendLog 来触发？不行。
-      
-      // 既然我已经修改了 NotificationIpc.js，我可以再加一个 'notification:test' handler。
-      // 但我现在不能修改已经写入的文件而不再次调用 Write。
-      
-      // 让我们修改 debug.js 来提示用户。
-      // 或者，我再次修改 NotificationIpc.js 添加 test 方法。
-      // 这样 debug 页面就能调用了。
-      
       window.settingsAPI?.testNotification?.('main');
     });
 

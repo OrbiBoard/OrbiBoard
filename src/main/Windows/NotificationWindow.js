@@ -42,14 +42,12 @@ class NotificationWindow {
       this.create();
     }
 
-    // Wait for load if needed, but usually we just send update
-    this.window.webContents.once('did-finish-load', () => {
-       this._display(title, content, hasDetails, duration);
-    });
-
-    // If already loaded
-    if (this.window.webContents.isLoading() === false) {
-       this._display(title, content, hasDetails, duration);
+    if (!this.window.webContents.isLoading()) {
+      this._display(title, content, hasDetails, duration);
+    } else {
+      this.window.webContents.once('did-finish-load', () => {
+        this._display(title, content, hasDetails, duration);
+      });
     }
   }
 
@@ -65,9 +63,10 @@ class NotificationWindow {
     this.window.setPosition(x, y);
     
     this.window.webContents.send('notification:update', { title, content, hasDetails });
+    this.window.show();
     
     // Show window without focusing to avoid stealing focus
-    this.window.showInactive();
+    // this.window.showInactive();
     this.isShowing = true;
 
     if (this.closeTimer) clearTimeout(this.closeTimer);

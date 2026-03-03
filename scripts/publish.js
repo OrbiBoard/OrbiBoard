@@ -100,7 +100,7 @@ async function main() {
       }
 
       // 0.1 检查云端版本（避免重复发布）
-      const serverBase = process.env.MARKET_URL ? process.env.MARKET_URL.replace(/\/api\/admin\/publish$/, '') : 'https://orbiboard.3r60.top/';
+      const serverBase = process.env.MARKET_URL ? process.env.MARKET_URL.replace(/\/api\/admin\/publish$/, '') : 'https://orbiboard.3r60.top';
       const versionUrl = `${serverBase}/api/version`;
       
       console.log(`[Publish] Checking remote version from ${versionUrl}...`);

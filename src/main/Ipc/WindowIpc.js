@@ -68,6 +68,17 @@ function register() {
     try { menu.popup({ window: win }); } catch (e) {}
     return { ok: true };
   });
+
+  ipcMain.handle('wizard:complete', async (event) => {
+    try {
+      store.set('system', 'wizardCompleted', true);
+      windowManager.closeWizardWindow();
+      windowManager.createSettingsWindow();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e?.message || String(e) };
+    }
+  });
 }
 
 module.exports = { register };

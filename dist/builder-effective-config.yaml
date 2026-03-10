@@ -35,4 +35,4 @@ nsis:
   runAfterFinish: true
   deleteAppDataOnUninstall: false
   include: build/installer.nsh
-electronVersion: 38.8.2
+electronVersion: 38.7.2

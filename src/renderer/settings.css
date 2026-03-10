@@ -2730,9 +2730,97 @@ textarea,
 
 /* 特定模态框内容体允许选择（但内部按钮受上方规则限制） */
 .modal-box.plugin-about .modal-body,
-.modal-box.component-about .modal-body {
+.modal-box.component-about .modal-body,
+.modal-box.help-modal .modal-body {
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* 帮助模态框样式 */
+.modal-box.help-modal {
+  width: 800px;
+  max-width: 90vw;
+}
+
+.modal-box.help-modal .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Markdown 渲染样式 */
+.modal-readme {
+  line-height: 1.6;
+}
+
+.modal-readme h1,
+.modal-readme h2,
+.modal-readme h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--fg-title);
+}
+
+.modal-readme h1 {
+  font-size: 1.8em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+}
+
+.modal-readme h2 {
+  font-size: 1.4em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2em;
+}
+
+.modal-readme h3 {
+  font-size: 1.2em;
+}
+
+.modal-readme p {
+  margin: 1em 0;
+}
+
+.modal-readme ul,
+.modal-readme ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.modal-readme li {
+  margin: 0.5em 0;
+}
+
+.modal-readme code {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2em 0.4em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.modal-readme pre {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.modal-readme pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.modal-readme a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.modal-readme a:hover {
+  text-decoration: underline;
 }
 
 /* Ensure custom scrollbar for plugin modal panels */

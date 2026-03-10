@@ -727,6 +727,23 @@ async function initGeneralSettings() {
   timeOffset.value = Number(cfg.timeOffset || 0);
   autoOffsetDaily.value = Number(cfg.autoOffsetDaily || 0);
 
+  const semesterQuickBtns = document.getElementById('semester-quick-buttons');
+  if (semesterQuickBtns && window.lunarUtils) {
+    const options = window.lunarUtils.getSemesterOptions();
+    semesterQuickBtns.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary small';
+      btn.textContent = opt.label.split('(')[0].trim();
+      btn.title = opt.label;
+      btn.addEventListener('click', () => {
+        semesterStart.value = opt.value;
+        semesterStart.dispatchEvent(new Event('change'));
+      });
+      semesterQuickBtns.appendChild(btn);
+    });
+  }
+
   // 时间与日期：实时展示与计算逻辑
   const tzInput = document.getElementById('time-zone');
   if (tzInput) {

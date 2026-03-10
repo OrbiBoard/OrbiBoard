@@ -1,5 +1,10 @@
 
 function renderMarkdown(md) {
+  // 使用marked库进行Markdown渲染，提供更先进的处理能力
+  if (typeof marked !== 'undefined') {
+    return marked.parse(String(md || ''));
+  }
+  // 降级处理：如果marked库不可用，使用简单的正则表达式处理
   const escape = (s) => String(s || '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   let src = String(md || '');
   // 代码块

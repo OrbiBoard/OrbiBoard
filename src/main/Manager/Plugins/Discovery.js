@@ -144,7 +144,7 @@ function scanComponents(pluginsRoot) {
   try {
     const pluginComponents = [];
     for (const p of Registry.manifest.plugins) {
-      if (p.type === 'plugin' && p.local) {
+      if ((p.type === 'plugin' || p.type === 'service') && p.local) {
         const pDir = path.resolve(pluginsRoot, p.local);
         const compDirName = p.componentsDir || 'components';
         const cRoot = path.join(pDir, compDirName);

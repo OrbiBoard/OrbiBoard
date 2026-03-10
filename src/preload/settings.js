@@ -91,6 +91,13 @@ contextBridge.exposeInMainWorld('settingsAPI', {
     ipcRenderer.on('sys:config-changed', listener);
     return () => ipcRenderer.removeListener('sys:config-changed', listener);
   },
+  // 主题 API
+  getTheme: () => ipcRenderer.invoke('config:getTheme'),
+  onThemeChanged: (handler) => {
+    const listener = (_e, theme) => handler && handler(theme);
+    ipcRenderer.on('sys:theme-changed', listener);
+    return () => ipcRenderer.removeListener('sys:theme-changed', listener);
+  },
   // 窗口状态变化监听
   onWindowStateChanged: (handler) => {
     ipcRenderer.on('window-state-changed', (_e, payload) => handler && handler(payload));

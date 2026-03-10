@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>设置向导 - OrbiBoard</title>
+  <link rel="stylesheet" href="./wizard.css" />
+  <link rel="stylesheet" href="./fonts-local.css" />
+  <link rel="stylesheet" href="./remixicon-local.css" />
+</head>
+
+<body>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="step-indicators" id="step-indicators"></div>
+    </div>
+
+    <div class="wizard-content" id="wizard-content">
+      <section id="step-welcome" class="step active">
+        <div class="welcome-content">
+          <div class="logo-container">
+            <img src="../../icon.ico" alt="OrbiBoard Logo" class="wizard-logo" />
+          </div>
+          <h1 class="welcome-title">欢迎使用 OrbiBoard</h1>
+          <p class="welcome-subtitle">插件化大屏课堂辅助工具</p>
+          <p class="welcome-desc">让我们开始进行一些基本设置，让软件更符合您的使用习惯。</p>
+          <button class="btn primary large" id="btn-start">
+            <i class="ri-arrow-right-line"></i> 开始设置
+          </button>
+        </div>
+      </section>
+
+      <section id="step-appearance" class="step" hidden>
+        <div class="step-header">
+          <h2><i class="ri-palette-line"></i> 外观与主题</h2>
+          <p>选择您喜欢的界面外观</p>
+        </div>
+        <div class="step-body">
+          <div class="form-group">
+            <label class="form-label">主题模式</label>
+            <div class="options" role="group">
+              <input type="radio" id="theme-system" name="themeMode" value="system" checked />
+              <label for="theme-system"><i class="ri-computer-line"></i> 跟随系统</label>
+              <input type="radio" id="theme-light" name="themeMode" value="light" />
+              <label for="theme-light"><i class="ri-sun-line"></i> 浅色</label>
+              <input type="radio" id="theme-dark" name="themeMode" value="dark" />
+              <label for="theme-dark"><i class="ri-moon-line"></i> 深色</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">主题强调色</label>
+            <div class="color-picker" id="color-picker"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step-splash" class="step" hidden>
+        <div class="step-header">
+          <h2><i class="ri-window-line"></i> 启动页设置</h2>
+          <p>配置启动时显示的加载页面</p>
+        </div>
+        <div class="step-body">
+          <div class="form-group">
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-title">启用启动页</span>
+                <span class="setting-desc">应用启动时显示加载页面</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="splash-enabled" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-title">显示名言</span>
+                <span class="setting-desc">在启动页显示励志名言</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="splash-quote-enabled" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">背景样式</label>
+            <div class="options compact" role="group">
+              <input type="radio" id="bg-black" name="splashBgStyle" value="black" checked />
+              <label for="bg-black">纯黑</label>
+              <input type="radio" id="bg-default" name="splashBgStyle" value="default" />
+              <label for="bg-default">深绿</label>
+              <input type="radio" id="bg-blue" name="splashBgStyle" value="blue" />
+              <label for="bg-blue">深蓝</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step-semester" class="step" hidden>
+        <div class="step-header">
+          <h2><i class="ri-calendar-event-line"></i> 时间与日期</h2>
+          <p>设置学期开始时间，用于计算周次</p>
+        </div>
+        <div class="step-body">
+          <div class="form-group">
+            <label class="form-label">快速选择学期开始时间</label>
+            <div class="semester-options" id="semester-options"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">或自定义日期</label>
+            <div class="date-input-row">
+              <input type="date" id="semester-start" />
+              <label class="switch-inline">
+                <input type="checkbox" id="biweek-offset" />
+                <span>单双周偏移</span>
+              </label>
+            </div>
+            <p class="form-hint">学期开始日期用于计算当前周次和单双周判断</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="step-market" class="step" hidden>
+        <div class="step-header">
+          <h2><i class="ri-store-2-line"></i> 功能市场</h2>
+          <p>推荐一些常用功能，您可以选择安装</p>
+        </div>
+        <div class="step-body">
+          <div class="market-grid" id="market-grid">
+            <div class="market-loading">
+              <i class="ri-loader-4-line ri-spin"></i> 正在加载推荐功能...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step-complete" class="step" hidden>
+        <div class="complete-content">
+          <div class="complete-icon">
+            <i class="ri-checkbox-circle-line"></i>
+          </div>
+          <h2 class="complete-title">设置完成！</h2>
+          <p class="complete-desc">您已完成基本设置，现在可以开始使用 OrbiBoard 了。</p>
+          <p class="complete-hint">您随时可以在"通用设置"中修改这些选项</p>
+          <button class="btn primary large" id="btn-finish">
+            <i class="ri-check-line"></i> 开始使用
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="wizard-footer" id="wizard-footer" hidden>
+      <button class="btn secondary" id="btn-prev">
+        <i class="ri-arrow-left-line"></i> 上一步
+      </button>
+      <button class="btn primary" id="btn-next">
+        下一步 <i class="ri-arrow-right-line"></i>
+      </button>
+    </div>
+  </div>
+
+  <script src="./settings/processor/lunar.js"></script>
+  <script src="./wizard.js"></script>
+</body>
+
+</html>

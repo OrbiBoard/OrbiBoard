@@ -687,6 +687,20 @@
     });
   });
 
+  const windowsClearIcons = document.getElementById('windows-clear-icons');
+  windowsClearIcons?.addEventListener('click', async () => {
+    try {
+      const result = await window.consoleAPI?.clearPluginIcons?.();
+      if (result && result.ok) {
+        alert(`已清除 ${result.count} 个图标缓存文件`);
+      } else {
+        alert('清除失败：' + (result?.error || '未知错误'));
+      }
+    } catch (e) {
+      alert('清除失败：' + (e?.message || String(e)));
+    }
+  });
+
   window.addEventListener('beforeunload', () => {
     try { if (metricsTimer) clearInterval(metricsTimer); } catch (e) {}
     try { if (windowsTimer) clearInterval(windowsTimer); } catch (e) {}

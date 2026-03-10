@@ -3,6 +3,7 @@ const fs = require('fs');
 const backendLog = require('../Debug/backendLog');
 const pluginManager = require('../Manager/Plugins/Main');
 const windowManager = require('../Windows/WindowManager');
+const PluginIconService = require('../Manager/Plugins/PluginIconService');
 
 function register() {
   ipcMain.handle('debug:logs:get', async () => {
@@ -187,6 +188,15 @@ function register() {
       if (canceled || !filePath) return { ok: false, error: 'cancelled' };
       fs.writeFileSync(filePath, String(text || ''), 'utf-8');
       return { ok: true, path: filePath };
+    } catch (e) {
+      return { ok: false, error: e?.message || String(e) };
+    }
+  });
+
+  ipcMain.handle('console:clearPluginIcons', async () => {
+    try {
+      const result = PluginIconService.clearPluginIcons();
+      return result;
     } catch (e) {
       return { ok: false, error: e?.message || String(e) };
     }

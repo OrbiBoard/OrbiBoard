@@ -3,6 +3,24 @@ const store = require('../Manager/Store/Main');
 const pluginManager = require('../Manager/Plugins/Main');
 const backendLog = require('../Debug/backendLog');
 
+const THEME_KEYS = ['themeMode', 'themeColor'];
+const THEME_EVENT = 'sys:theme-changed';
+
+function broadcastThemeChange() {
+  try {
+    const sys = store.getAll('system') || {};
+    const theme = {
+      mode: sys.themeMode || 'system',
+      color: sys.themeColor || '#238f4a'
+    };
+    BrowserWindow.getAllWindows().forEach(win => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(THEME_EVENT, theme);
+      }
+    });
+  } catch (e) {}
+}
+
 function register() {
   ipcMain.handle('config:getAll', async (_e, scope) => {
     return store.getAll(scope);
@@ -13,17 +31,31 @@ function register() {
   ipcMain.handle('config:set', async (_e, scope, key, value) => {
     const r = store.set(scope, key, value);
     try {
-      // 广播配置更改事件
       BrowserWindow.getAllWindows().forEach(win => {
         if (!win.isDestroyed()) {
           win.webContents.send('sys:config-changed', { scope, key, value });
         }
       });
+      if (scope === 'system' && THEME_KEYS.includes(key)) {
+        broadcastThemeChange();
+      }
       if (scope === 'system' && key === 'developerMode') {
         backendLog.enableLogging(true);
       }
     } catch (e) {}
     return r;
+  });
+  ipcMain.handle('config:getTheme', async () => {
+    try {
+      const sys = store.getAll('system') || {};
+      return {
+        ok: true,
+        mode: sys.themeMode || 'system',
+        color: sys.themeColor || '#238f4a'
+      };
+    } catch (e) {
+      return { ok: false, error: e?.message || String(e) };
+    }
   });
   ipcMain.handle('config:deleteScope', async (_e, scope) => {
     return store.deleteScope(scope);

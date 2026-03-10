@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./settings.css" />
   <link rel="stylesheet" href="./fonts-local.css" />
   <link rel="stylesheet" href="./remixicon-local.css" />
+  <script src="./lib/marked.min.js"></script>
   <style>
     /* 初始加载遮罩 */
     #loading-mask {
@@ -114,7 +115,10 @@
           <header class="plugins-header">
             <div class="header-left">
               <h1>插件管理</h1>
-              <p>对已安装的插件进行管理或配置</p>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <p>对已安装的插件进行管理或配置</p>
+                <button class="help-btn icon-btn" data-page="plugins" title="查看帮助文档"><i class="ri-question-line"></i></button>
+              </div>
             </div>
             <div class="header-right">
               <div id="plugins-view-switch" class="options compact" role="group" aria-label="视图类型">
@@ -131,14 +135,20 @@
         <section id="page-components" hidden>
           <header>
             <h1>组件管理</h1>
-            <p>管理并预览已安装的组件（按组归类）</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>管理并预览已安装的组件（按组归类）</p>
+              <button class="help-btn icon-btn" data-page="components" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <div id="components-list" class="plugins"></div>
         </section>
         <section id="page-market" hidden>
           <header>
             <h1>功能市场</h1>
-            <p>浏览、发现与获取功能模块</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>浏览、发现与获取功能模块</p>
+              <button class="help-btn icon-btn" data-page="market" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <!-- 顶部大分类 Tabs（复用通用设置的子导航样式） -->
           <div class="subnav store-tabs" style="display:flex;align-items:center;gap:8px;">
@@ -180,7 +190,10 @@
         <section id="page-general" hidden>
           <header>
             <h1>通用设置</h1>
-            <p>应用基础设置、启动页与名言配置</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>应用基础设置、启动页与名言配置</p>
+              <button class="help-btn icon-btn" data-page="general" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <!-- 子夹（子页面）导航 -->
           <div class="subnav">
@@ -488,6 +501,7 @@
                 <div class="setting-main">
                   <div class="setting-title">学期开始日期</div>
                   <div class="setting-desc">用于单双周判断与时间偏移基准。</div>
+                  <div id="semester-quick-buttons" class="inline" style="margin-top:8px; flex-wrap:wrap;"></div>
                 </div>
                 <div class="setting-action">
                   <div class="inline">
@@ -633,7 +647,10 @@
         <section id="page-config" hidden>
           <header>
             <h1>配置总览</h1>
-            <p>按插件与主程序聚合并快速编辑配置项</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>按插件与主程序聚合并快速编辑配置项</p>
+              <button class="help-btn icon-btn" data-page="config" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <div class="panel">
             <div class="inline" style="gap:8px; align-items:center;">
@@ -650,7 +667,10 @@
         <section id="page-defaults" hidden>
           <header>
             <h1>默认行为</h1>
-            <p>为动作名选择默认执行的插件</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>为动作名选择默认执行的插件</p>
+              <button class="help-btn icon-btn" data-page="defaults" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <div class="panel">
             <div id="defaults-list" class="plugins"></div>
@@ -663,7 +683,10 @@
         <section id="page-automation" hidden>
           <header>
             <h1>自动执行</h1>
-            <p>根据触发与条件自动执行任务</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>根据触发与条件自动执行任务</p>
+              <button class="help-btn icon-btn" data-page="automation" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <div class="panel automation">
             <div class="auto-left">
@@ -697,7 +720,10 @@
         <section id="page-debug" hidden>
           <header>
             <h1>调试</h1>
-            <p>开发者模式下提供运行管理与图标工具。</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>开发者模式下提供运行管理与图标工具。</p>
+              <button class="help-btn icon-btn" data-page="debug" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <!-- 子页导航 -->
           <div class="subnav">
@@ -949,7 +975,10 @@
         <section id="page-npm" hidden>
           <header>
             <h1>依赖管理</h1>
-            <p>管理插件依赖的 Node 模块：搜索、下载与删除版本</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <p>管理插件依赖的 Node 模块：搜索、下载与删除版本</p>
+              <button class="help-btn icon-btn" data-page="npm" title="查看帮助文档"><i class="ri-question-line"></i></button>
+            </div>
           </header>
           <div class="panel">
             <div class="npm-search">
@@ -982,6 +1011,7 @@
   <script src="./settings/processor/icon.js"></script>
   <script src="./settings/processor/text.js"></script>
   <script src="./settings/processor/install.js"></script>
+  <script src="./settings/processor/lunar.js"></script>
   <script src="./settings/theme.js"></script>
   <script src="./settings/modals/message.js"></script>
   <script src="./settings/modals/editor.js"></script>

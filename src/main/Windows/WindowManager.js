@@ -7,6 +7,7 @@ class WindowManager {
     this.splashWindow = null;
     this.settingsWindow = null;
     this.consoleWindow = null;
+    this.wizardWindow = null;
     this.splashReady = false;
     this.splashQueue = [];
   }
@@ -124,10 +125,53 @@ class WindowManager {
     return this.consoleWindow;
   }
 
+  createWizardWindow() {
+    this.wizardWindow = new BrowserWindow({
+      width: 800,
+      height: 560,
+      useContentSize: true,
+      center: true,
+      resizable: false,
+      frame: false,
+      show: false,
+      webPreferences: {
+        preload: path.join(app.getAppPath(), 'src', 'preload', 'wizard.js')
+      }
+    });
+    this.wizardWindow.loadFile(path.join(app.getAppPath(), 'src', 'renderer', 'wizard.html'));
+    this.wizardWindow.once('ready-to-show', () => this.wizardWindow.show());
+    this.wizardWindow.on('closed', () => {
+      this.wizardWindow = null;
+      const store = require('../Manager/Store/Main');
+      const wizardCompleted = store.get('system', 'wizardCompleted');
+      if (!wizardCompleted) {
+        app.quit();
+      }
+    });
+  }
+
+  ensureWizardWindow() {
+    if (!this.wizardWindow || this.wizardWindow.isDestroyed()) this.createWizardWindow();
+    if (this.wizardWindow?.isMinimized?.()) this.wizardWindow.restore();
+    this.wizardWindow.show();
+    this.wizardWindow.focus();
+    return this.wizardWindow;
+  }
+
+  closeWizardWindow() {
+    try {
+      if (this.wizardWindow && !this.wizardWindow.isDestroyed()) {
+        this.wizardWindow.close();
+      }
+    } catch (e) {}
+    this.wizardWindow = null;
+  }
+
   closeAllWindows() {
     try { if (this.settingsWindow && !this.settingsWindow.isDestroyed()) this.settingsWindow.destroy(); } catch (e) {}
     try { if (this.splashWindow && !this.splashWindow.isDestroyed()) this.splashWindow.destroy(); } catch (e) {}
     try { if (this.consoleWindow && !this.consoleWindow.isDestroyed()) this.consoleWindow.destroy(); } catch (e) {}
+    try { if (this.wizardWindow && !this.wizardWindow.isDestroyed()) this.wizardWindow.destroy(); } catch (e) {}
   }
 }
 

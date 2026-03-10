@@ -1,4 +1,4 @@
-const { webContents } = require('electron');
+const { webContents, BrowserWindow, app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -6,6 +6,7 @@ const Registry = require('./Registry');
 const store = require('../Store/Main');
 const win32 = require('../../System/Win32');
 const backendLog = require('../../Debug/backendLog');
+const PluginIconService = require('./PluginIconService');
 
 // -------- API / 事件总线 --------
 
@@ -589,6 +590,46 @@ function createPluginApi(pluginId, ipcMain) {
   api.native = {
     koffi: win32.koffi
   };
+
+  // 任务栏分组 API (Windows only)
+  if (process.platform === 'win32') {
+    api.taskbar = {
+      setGroup: (browserWindow, options) => {
+        try {
+          if (!browserWindow) return { ok: false, error: 'window_required' };
+          if (browserWindow.isDestroyed()) return { ok: false, error: 'window_destroyed' };
+          
+          const { appId, iconPath, displayName } = options || {};
+          if (!appId) return { ok: false, error: 'appId_required' };
+          
+          const details = { appId };
+          if (iconPath && typeof iconPath === 'string') {
+            details.appIconPath = iconPath;
+          }
+          if (displayName && typeof displayName === 'string') {
+            details.relaunchDisplayName = displayName;
+          }
+          
+          browserWindow.setAppDetails(details);
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      },
+      resetGroup: (browserWindow) => {
+        try {
+          if (!browserWindow) return { ok: false, error: 'window_required' };
+          if (browserWindow.isDestroyed()) return { ok: false, error: 'window_destroyed' };
+          
+          const baseAppId = app.getAppUserModelId() || 'com.orbiboard';
+          browserWindow.setAppDetails({ appId: baseAppId });
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      }
+    };
+  }
 
   return api;
 }

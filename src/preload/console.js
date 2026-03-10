@@ -23,11 +23,18 @@ contextBridge.exposeInMainWorld('consoleAPI', {
   controlWindow: (windowId, action) => ipcRenderer.invoke('console:controlWindow', windowId, action)
   ,
   exportText: (text, defaultName) => ipcRenderer.invoke('console:exportText', text, defaultName),
+  clearPluginIcons: () => ipcRenderer.invoke('console:clearPluginIcons'),
   // Theme support
   configGetAll: (scope) => ipcRenderer.invoke('config:getAll', scope),
   onConfigChanged: (handler) => {
     const listener = (_e, payload) => handler && handler(payload);
     ipcRenderer.on('sys:config-changed', listener);
     return () => ipcRenderer.removeListener('sys:config-changed', listener);
+  },
+  getTheme: () => ipcRenderer.invoke('config:getTheme'),
+  onThemeChanged: (handler) => {
+    const listener = (_e, theme) => handler && handler(theme);
+    ipcRenderer.on('sys:theme-changed', listener);
+    return () => ipcRenderer.removeListener('sys:theme-changed', listener);
   }
 });

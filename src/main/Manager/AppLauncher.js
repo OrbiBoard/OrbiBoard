@@ -245,6 +245,10 @@ class AppLauncherManager {
         }
       });
       
+      // Ensure window stays on top with highest level
+      this.appWin.setAlwaysOnTop(true, 'screen-saver');
+      this.appWin.moveTop();
+      
       this.appWin.loadFile(path.join(app.getAppPath(), 'src', 'renderer', 'app-launcher', 'index.html'));
 
       this.appWin.once('ready-to-show', () => {

@@ -22,7 +22,7 @@ window.initComponentsPage = async function initComponentsPage() {
             <span class="pill small">${c.group || '未分组'}</span>
             ${c.sourcePlugin ? '<span class="pill small" style="background:rgba(var(--color-primary-rgb), 0.1);color:var(--color-primary);">由插件提供</span>' : ''}
           </div>
-          <div class="card-desc" style="word-break: break-all; overflow-wrap: anywhere;">入口：${c.entry || 'index.html'}</div>
+          <div class="card-desc" style="word-break: break-all; overflow-wrap: anywhere;">入口：${c.entry || 'index.html'}${c.sourcePlugin?.name ? `<span style="font-size:10px;opacity:0.6;">需要插件: ${c.sourcePlugin.name}</span>` : ''}</div>
         </div>
       </div>
       <div class="card-actions">

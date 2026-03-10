@@ -12,6 +12,7 @@ const windowManager = require('../Windows/WindowManager');
 const trayManager = require('../App/TrayManager');
 const userDataService = require('../Services/UserDataService');
 const startupService = require('../Services/StartupService');
+const PluginIconService = require('../Manager/Plugins/PluginIconService');
 
 // IPC Registers
 const pluginIpc = require('../Ipc/PluginIpc');
@@ -104,8 +105,18 @@ async function init(appInstance) {
       developerMode: false,
       timeZone: 'Asia/Shanghai',
       autoUpdateEnabled: true,
-      updateServerUrl: 'https://orbiboard.3r60.top'
+      updateServerUrl: 'https://orbiboard.3r60.top',
+      wizardCompleted: false
     });
+
+    let shouldShowWizard = false;
+    try {
+      const wizardCompleted = store.get('system', 'wizardCompleted');
+      const lastRunVersion = store.get('system', 'lastRunVersion');
+      if (!wizardCompleted && !lastRunVersion) {
+        shouldShowWizard = true;
+      }
+    } catch (e) {}
 
     try { backendLog.init({ enabled: true }); } catch (e) {}
     try { win32.init(); } catch (e) {}
@@ -261,13 +272,18 @@ async function init(appInstance) {
 
     trayManager.createTray();
 
-    if (!hasProtocolArgAtBoot) {
+    // 初始化图标生成窗口
+    PluginIconService.init();
+
+    if (shouldShowWizard) {
+      windowManager.createWizardWindow();
+    } else if (!hasProtocolArgAtBoot) {
       windowManager.createSettingsWindow();
     }
 
     // Monitor windows
     try {
-      app.on('browser-window-created', (_e, win) => {
+      app.on('browser-window-created', async (_e, win) => {
         try {
           const wc = win?.webContents;
           const info = {
@@ -288,6 +304,77 @@ async function init(appInstance) {
         try {
           win.on('closed', () => { try { console.info('window:closed', { id: win.id }); } catch (e) {} });
         } catch (e) {}
+        
+        // 自动为插件窗口设置任务栏分组 (Windows only)
+        if (process.platform === 'win32') {
+          try {
+            const wc = win?.webContents;
+            if (!wc) return;
+            
+            wc.once('did-finish-load', async () => {
+              try {
+                const url = wc.getURL();
+                const appPath = app.getAppPath();
+                const manifest = pluginManager.getPlugins ? pluginManager.getPlugins() : [];
+                
+                let pluginId = null;
+                let pluginInfo = null;
+                
+                // 检查是否是系统窗口
+                const isSystemWindow = url.includes('/OrbiBoard/src/') || url.includes(appPath + '/src/');
+                if (isSystemWindow) return;
+                
+                // 优先检查窗口是否有调用者插件信息（UI模板窗口）
+                const callerPluginId = win._callerPluginId;
+                const callerPluginName = win._callerPluginName;
+                if (callerPluginId) {
+                  pluginId = callerPluginId;
+                  pluginInfo = manifest.find(p => p.id === callerPluginId);
+                  if (!pluginInfo) {
+                    pluginInfo = {
+                      id: callerPluginId,
+                      name: callerPluginName || callerPluginId,
+                      icon: 'ri-plug-line',
+                      iconBg: '#262626',
+                      iconFg: '#ffffff'
+                    };
+                  }
+                } else {
+                  // 通过 URL 匹配插件
+                  for (const p of manifest) {
+                    if (p.local) {
+                      const pluginPath = '/plugins/' + p.local + '/';
+                      if (url.toLowerCase().includes(pluginPath.toLowerCase())) {
+                        pluginId = p.id;
+                        pluginInfo = p;
+                        break;
+                      }
+                    }
+                  }
+                }
+                
+                if (!pluginId) return;
+                
+                // 检查是否应该跳过任务栏
+                try {
+                  if (win.skipTaskbar === true) return;
+                } catch (e) {}
+                
+                // 确保图标存在
+                const iconResult = await PluginIconService.ensurePluginIcon(pluginId, pluginInfo);
+                console.info('taskbar:icon:generated', { pluginId, iconResult });
+                
+                // 设置任务栏分组
+                const groupResult = PluginIconService.setTaskbarGroup(win, pluginId, pluginInfo);
+                console.info('taskbar:group:result', { pluginId, windowId: win.id, groupResult });
+                
+                console.info('taskbar:group:set', { pluginId, windowId: win.id });
+              } catch (e) {
+                console.error('taskbar:group:error', e?.message || String(e), e?.stack || '');
+              }
+            });
+          } catch (e) {}
+        }
       });
     } catch (e) {}
 

@@ -45,6 +45,13 @@ function register() {
     return autoUpdater.checkAndUpdate((payload) => windowManager.sendSplashProgress(payload), false);
   });
 
+  ipcMain.handle('system:getAutoUpdateStatus', async () => {
+    return {
+      isAutoUpdating: autoUpdater.isAutoUpdating(),
+      currentUpdateInfo: autoUpdater.getCurrentUpdateInfo()
+    };
+  });
+
   ipcMain.handle('system:getTime', async () => ntpService.getTime());
 
   ipcMain.handle('system:getUserDataPath', async () => {

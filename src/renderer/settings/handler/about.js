@@ -9,7 +9,6 @@ function initAboutPage() {
   const openDataBtn = document.getElementById('about-open-data');
   const versionEl = document.getElementById('about-version');
 
-  // 优先通过主进程API获取版本与环境信息；否则从 UA 与 process 解析
   (async () => {
     try {
       const info = await window.settingsAPI?.getAppInfo?.();
@@ -31,7 +30,6 @@ function initAboutPage() {
     }
   })();
 
-  // 复制版本信息到剪贴板
   copyBtn?.addEventListener('click', async () => {
     const merged = [
       `OrbiBoard ${vEl?.textContent || '—'}`,
@@ -43,7 +41,6 @@ function initAboutPage() {
     try { await navigator.clipboard?.writeText(merged); } catch (e) {}
   });
 
-  // 打开数据目录（如主进程实现该接口）
   if (openDataBtn) {
     if (window.settingsAPI?.openUserData) {
       openDataBtn.hidden = false;
@@ -56,7 +53,6 @@ function initAboutPage() {
     }
   }
 
-  // 开发者模式：点击版本号5次切换（避免重复绑定导致多次弹窗）
   const debugNavBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.dataset.page === 'debug');
   if (versionEl && versionEl.dataset.devToggleBound !== '1') {
     versionEl.dataset.devToggleBound = '1';
@@ -74,12 +70,10 @@ function initAboutPage() {
           const ok = await showConfirm('开发者模式将显示调试功能，操作有风险，请谨慎使用。', '开启开发者模式');
           if (!ok) return;
           await window.settingsAPI?.configSet?.('system', 'developerMode', true);
-          // 显示调试页导航并跳转到运行管理
           if (debugNavBtn) { debugNavBtn.style.display = ''; debugNavBtn.click(); }
           showToast('开发者模式已开启', { type: 'success', duration: 2000 });
         } else {
           await window.settingsAPI?.configSet?.('system', 'developerMode', false);
-          // 隐藏调试页导航
           if (debugNavBtn) { debugNavBtn.style.display = 'none'; }
           showToast('开发者模式已关闭', { type: 'info', duration: 2000 });
         }
@@ -87,7 +81,6 @@ function initAboutPage() {
     });
   }
 
-  // 检查更新逻辑
   const checkBtn = document.getElementById('about-check-update');
   const updateStatus = document.getElementById('update-status');
   const updateInfo = document.getElementById('update-info');
@@ -99,6 +92,45 @@ function initAboutPage() {
   const progressBar = document.getElementById('update-progress-bar');
   const progressText = document.getElementById('update-progress-text');
 
+  let isManualUpdating = false;
+  let autoUpdateOff = null;
+
+  async function checkAndShowAutoUpdateStatus() {
+    try {
+      const status = await window.settingsAPI?.getAutoUpdateStatus?.();
+      if (status && status.isAutoUpdating && status.currentUpdateInfo) {
+        const info = status.currentUpdateInfo;
+        updateStatus.textContent = '正在自动更新...';
+        newVersionEl.textContent = info.remoteVersion;
+        const notes = info.notes || '暂无更新日志';
+        notesEl.innerHTML = notes.replace(/\n/g, '<br/>');
+        updateDetails.hidden = false;
+        progressWrap.style.display = 'flex';
+        performBtn.style.display = 'none';
+        
+        if (autoUpdateOff) autoUpdateOff();
+        autoUpdateOff = window.settingsAPI.onProgress((payload) => {
+          if (payload && payload.stage === 'update' && payload.isAuto === true) {
+            const msg = String(payload.message || '');
+            const m = msg.match(/(\d+)%/);
+            if (m) {
+              const pct = parseInt(m[1], 10);
+              progressBar.style.width = pct + '%';
+              progressText.textContent = pct + '%';
+            }
+            if (msg.includes('应用更新包') || msg.includes('启动安装程序')) {
+              progressBar.style.width = '100%';
+              progressText.textContent = '100%';
+              updateStatus.textContent = '更新完成，正在重启...';
+            }
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  checkAndShowAutoUpdateStatus();
+
   if (checkBtn) {
     checkBtn.addEventListener('click', async () => {
       if (checkBtn.disabled) return;
@@ -109,19 +141,17 @@ function initAboutPage() {
       
       try {
         let res;
-        // 检查是否为开发环境（未打包），如果是则模拟更新
         const appInfo = await window.settingsAPI?.getAppInfo?.();
         if (appInfo && appInfo.isDev) {
-          // 模拟延迟
           await new Promise(r => setTimeout(r, 1000));
           res = {
             ok: true,
             hasUpdate: true,
             remoteVersion: '1.2.3-preview',
-            notes: '这是一条模拟的更新日志（仅开发模式可见）。\n\n1. 修复了若干问题\n2. 优化了用户体验\n3. 新增了模拟更新功能\n\n点击“立即更新”将演示进度条效果。'
+            notes: '这是一条模拟的更新日志（仅开发模式可见）。\n\n1. 修复了若干问题\n2. 优化了用户体验\n3. 新增了模拟更新功能\n\n点击"立即更新"将演示进度条效果。'
           };
         } else {
-          res = await window.settingsAPI.checkUpdate(true); // true = checkOnly
+          res = await window.settingsAPI.checkUpdate(true);
         }
 
         const now = new Date();
@@ -133,11 +163,9 @@ function initAboutPage() {
         } else if (res.hasUpdate) {
           updateStatus.textContent = '发现新版本';
           newVersionEl.textContent = res.remoteVersion;
-          // 显示更新日志
           const notes = res.notes || '暂无更新日志';
           notesEl.innerHTML = notes.replace(/\n/g, '<br/>');
           updateDetails.hidden = false;
-          // 重置进度条
           progressWrap.style.display = 'none';
           performBtn.style.display = 'inline-flex';
           performBtn.disabled = false;
@@ -159,11 +187,10 @@ function initAboutPage() {
       performBtn.disabled = true;
       performBtn.style.display = 'none';
       progressWrap.style.display = 'flex';
+      isManualUpdating = true;
 
-      // 检查是否为开发环境
       const appInfo = await window.settingsAPI?.getAppInfo?.();
       if (appInfo && appInfo.isDev) {
-        // 模拟下载进度
         let p = 0;
         const timer = setInterval(() => {
           p += 5;
@@ -174,25 +201,25 @@ function initAboutPage() {
             clearInterval(timer);
             updateStatus.textContent = '模拟更新完成，正在重启...';
             setTimeout(() => {
-              window.location.reload(); // 模拟重启刷新页面
+              window.location.reload();
             }, 1000);
           }
         }, 200);
         return;
       }
       
-      // 监听进度事件
       const off = window.settingsAPI.onProgress((payload) => {
         if (payload && payload.stage === 'update') {
+          if (payload.isAuto === true && isManualUpdating) {
+            return;
+          }
           const msg = String(payload.message || '');
-          // 尝试提取百分比
           const m = msg.match(/(\d+)%/);
           if (m) {
             const pct = parseInt(m[1], 10);
             progressBar.style.width = pct + '%';
             progressText.textContent = pct + '%';
           }
-          // 如果消息包含“应用更新包”或“启动安装程序”，视为 100%
           if (msg.includes('应用更新包') || msg.includes('启动安装程序')) {
              progressBar.style.width = '100%';
              progressText.textContent = '100%';
@@ -210,21 +237,20 @@ function initAboutPage() {
           performBtn.style.display = 'inline-flex';
           performBtn.disabled = false;
           progressWrap.style.display = 'none';
+          isManualUpdating = false;
         }
       } catch (e) {
         updateStatus.textContent = '更新失败: ' + (e.message || String(e));
         performBtn.style.display = 'inline-flex';
         performBtn.disabled = false;
         progressWrap.style.display = 'none';
+        isManualUpdating = false;
       } finally {
-        // 通常 performUpdate 会重启应用，这里的 finally 可能不会执行
-        // 但如果失败了需要解绑
         if (off) off(); 
       }
     });
   }
 
-  // 详细信息切换
   const toggleBtn = document.getElementById('about-toggle-details');
   const detailsArea = document.getElementById('about-details-area');
   if (toggleBtn && detailsArea && toggleBtn.dataset.bound !== '1') {
@@ -236,7 +262,6 @@ function initAboutPage() {
     });
   }
 
-  // 仓库按钮
   const repoBtn = document.getElementById('about-repo');
   if (repoBtn && repoBtn.dataset.bound !== '1') {
     repoBtn.dataset.bound = '1';

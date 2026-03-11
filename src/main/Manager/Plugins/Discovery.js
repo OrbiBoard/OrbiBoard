@@ -231,7 +231,6 @@ function scanComponents(pluginsRoot) {
 }
 
 function scanGlobalComponents(pluginsRoot) {
-  // 组件目录：%USER_DATA%/OrbiBoard/components
   try {
     const componentsRoot = path.resolve(pluginsRoot, '..', 'components');
     const entries = fs.existsSync(componentsRoot) ? fs.readdirSync(componentsRoot) : [];
@@ -241,6 +240,85 @@ function scanGlobalComponents(pluginsRoot) {
       const metaPath = path.join(full, 'plugin.json');
       if (!fs.existsSync(metaPath)) continue;
       const meta = Utils.readJsonSafe(metaPath, {});
+      const metaType = String(meta.type || 'component').toLowerCase();
+      
+      if (metaType === 'plugin' || metaType === 'service') {
+        if (meta.componentsDir) {
+          const compDirName = meta.componentsDir;
+          const cRoot = path.join(full, compDirName);
+          if (fs.existsSync(cRoot) && fs.statSync(cRoot).isDirectory()) {
+            const pluginId = Utils.generateStableId(meta.id, meta.name, entry, 'plugin');
+            const pluginName = meta.name || entry;
+            const compEntries = fs.readdirSync(cRoot);
+            for (const compEntry of compEntries) {
+              const compFull = path.join(cRoot, compEntry);
+              if (!fs.existsSync(compFull) || !fs.statSync(compFull).isDirectory()) continue;
+              const compMetaPath = path.join(compFull, 'plugin.json');
+              if (!fs.existsSync(compMetaPath)) continue;
+              const compMeta = Utils.readJsonSafe(compMetaPath, {});
+              const compType = String(compMeta.type || 'component').toLowerCase();
+              if (compType !== 'component') continue;
+              const compEntryHtml = compMeta?.entry || 'index.html';
+              const compEntryPath = path.join(compFull, compEntryHtml);
+              if (!fs.existsSync(compEntryPath)) continue;
+              
+              const pkgPath = path.join(compFull, 'package.json');
+              let pkg = null;
+              if (fs.existsSync(pkgPath)) { try { pkg = Utils.readJsonSafe(pkgPath, {}); } catch (e) {} }
+              let detectedVersion = compMeta.version || (pkg?.version || null);
+              const rel = path.join('..', 'components', entry, compDirName, compEntry).replace(/\\/g, '/');
+              let compName = compMeta.name || compEntry;
+              const compId = Utils.generateStableId(compMeta.id, compName, compEntry, 'component');
+              
+              Registry.manifest.plugins.push({
+                id: compId,
+                name: compName,
+                npm: compMeta.npm || null,
+                local: rel,
+                enabled: compMeta.enabled !== undefined ? !!compMeta.enabled : true,
+                icon: compMeta.icon || null,
+                description: compMeta.description || '',
+                author: (compMeta.author !== undefined ? compMeta.author : (pkg?.author || null)),
+                type: 'component',
+                group: compMeta.group || null,
+                entry: compMeta.entry || 'index.html',
+                usage: compMeta.usage || null,
+                recommendedSize: compMeta.recommendedSize || undefined,
+                npmDependencies: (() => {
+                  if (compMeta && typeof compMeta.npmDependencies === 'object' && !Array.isArray(compMeta.npmDependencies)) return compMeta.npmDependencies;
+                  if (pkg && typeof pkg.dependencies === 'object' && !Array.isArray(pkg.dependencies)) return pkg.dependencies;
+                  return undefined;
+                })(),
+                actions: Array.isArray(compMeta.actions) ? compMeta.actions : [],
+                behaviors: Array.isArray(compMeta.behaviors) ? compMeta.behaviors : [],
+                functions: typeof compMeta.functions === 'object' ? compMeta.functions : undefined,
+                packages: Array.isArray(compMeta.packages) ? compMeta.packages : undefined,
+                version: detectedVersion,
+                studentColumns: Array.isArray(compMeta.studentColumns) ? compMeta.studentColumns : [],
+                dependencies: Array.isArray(compMeta.dependencies) ? compMeta.dependencies : (Array.isArray(compMeta.pluginDepends) ? compMeta.pluginDepends : undefined),
+                variables: undefined,
+                configSchema: (() => {
+                  try {
+                    if (Array.isArray(compMeta.configSchema)) return compMeta.configSchema;
+                    if (compMeta && typeof compMeta.configSchema === 'object' && compMeta.configSchema) return compMeta.configSchema;
+                    if (Array.isArray(compMeta.config)) return compMeta.config;
+                    if (compMeta && typeof compMeta.config === 'object' && compMeta.config) return compMeta.config;
+                  } catch (e) {}
+                  return undefined;
+                })(),
+                permissions: Array.isArray(compMeta.permissions) ? compMeta.permissions : [],
+                sourcePlugin: { id: pluginId, name: pluginName }
+              });
+              try {
+                if (compName) Registry.nameToId.set(String(compName), compId);
+                Registry.nameToId.set(String(compId), compId);
+              } catch (e) {}
+            }
+          }
+        }
+        continue;
+      }
+      
       const entryHtml = meta?.entry || 'index.html';
       const entryPath = path.join(full, entryHtml);
       if (!fs.existsSync(entryPath)) continue;

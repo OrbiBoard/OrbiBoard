@@ -170,6 +170,7 @@ contextBridge.exposeInMainWorld('settingsAPI', {
   // 检查与更新
   checkUpdate: (checkOnly) => ipcRenderer.invoke('system:checkUpdate', checkOnly),
   performUpdate: () => ipcRenderer.invoke('system:performUpdate'),
+  getAutoUpdateStatus: () => ipcRenderer.invoke('system:getAutoUpdateStatus'),
   // 查询依赖反向引用（依赖此插件的插件与自动化）
   pluginDependents: (idOrName) => ipcRenderer.invoke('plugin:dependents', idOrName),
 
